@@ -56,6 +56,10 @@
     <array>
         <string>UIInterfaceOrientationPortrait</string>
     </array>
+    <key>NSSupportsLiveActivities</key>
+    <true/>
+    <key>NSSupportsLiveActivitiesFrequentUpdates</key>
+    <true/>
     <key>UIUserInterfaceStyle</key>
     <string>Dark</string>
     <key>NSAppTransportSecurity</key>
