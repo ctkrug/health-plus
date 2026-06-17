@@ -84,6 +84,7 @@ final class AppState {
     var whoopService = WhoopService()
     var workoutStore = WorkoutStore()
     var notificationService = NotificationService()
+    var habitStore = HabitStore()
     var isOnboardingComplete: Bool {
         get { UserDefaults.standard.bool(forKey: "onboardingComplete") }
         set { UserDefaults.standard.set(newValue, forKey: "onboardingComplete") }

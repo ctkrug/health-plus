@@ -138,6 +138,26 @@ struct SettingsView: View {
                         .listRowBackground(Color.cardBackground)
                     }
 
+                    // AI
+                    Section("AI Coach") {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Anthropic API Key")
+                                .foregroundStyle(Color.textPrimary)
+                                .font(.system(size: 15))
+                            SecureField("sk-ant-…", text: Binding(
+                                get: { ClaudeService.shared.apiKey },
+                                set: { ClaudeService.shared.apiKey = $0 }
+                            ))
+                            .font(.system(size: 13, design: .monospaced))
+                            .foregroundStyle(Color.accentBlue)
+                            Text("Used for the Habits AI setup chat. Get a key at console.anthropic.com.")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Color.textTertiary)
+                        }
+                        .padding(.vertical, 4)
+                        .listRowBackground(Color.cardBackground)
+                    }
+
                     // About
                     Section("About") {
                         HStack {
