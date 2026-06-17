@@ -1,0 +1,681 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		04E9473FE4C0358FA9A2558E /* NutritionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6755904336D70DC9654DF611 /* NutritionCard.swift */; };
+		08D4AEFDBD1804EB83DB6151 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6607FEB457C6F72D3893535D /* OnboardingView.swift */; };
+		0EBEF8842AF0B8DCD825C398 /* ProgramView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B6188B447392C6E4C0A2E7E /* ProgramView.swift */; };
+		14CD2F9B74E7730E9282D5AA /* HapticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F62929B9C3F2DFB1ACDCB8F /* HapticsManager.swift */; };
+		17DED9D98A87AE18B8B71ACB /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFDA0AAC3128E3A60DC35918 /* SettingsView.swift */; };
+		1F393A025B25B3670542398D /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF7CE2F8F5421FDE76624861 /* KeychainService.swift */; };
+		254956DC7E23500FDD46E231 /* WhoopModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AF9492F11928B8A1E3411B6 /* WhoopModels.swift */; };
+		2AC8C2A82D6B922BC7DF2B54 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 703124B7AEE2677F18007650 /* DesignSystem.swift */; };
+		2BDE0608773EF60EA41EE0B2 /* SleepCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2A815024E97F73CBA6054DC /* SleepCard.swift */; };
+		3D564F9227AF46FAACFE64B5 /* WorkoutHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D8811C4C83658B4D7493CF9 /* WorkoutHistoryView.swift */; };
+		4ECC5648444134C5D77E8C78 /* HealthKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDE92B12E1BE74B6DB4A0D89 /* HealthKitService.swift */; };
+		5477D5B7247CF3D0622AF258 /* ProgressionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58ED3DE896C42416AF9F3CA3 /* ProgressionEngine.swift */; };
+		62F70FDC95661484331D6AE2 /* WorkoutListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52F6BE25CB2FC8F995415722 /* WorkoutListView.swift */; };
+		6BF2B20B4EF7CB850C4F5CE1 /* WhoopConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DB44D5107B959EB341224CD /* WhoopConnectView.swift */; };
+		75087045C7CA2E36044FCE0A /* WorkoutLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79AAF972BFEE30BB8FA171B7 /* WorkoutLiveActivity.swift */; };
+		8078739180E976B2A6469864 /* WhoopService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6EBE2503E51E64BF258330F /* WhoopService.swift */; };
+		8BD281A157A887154AD072C2 /* RecoveryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74F847996A6F582BA186C59F /* RecoveryCard.swift */; };
+		8E92A48D782AE18619F389EA /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A643B322BD5C5A7934F35C3B /* NotificationService.swift */; };
+		8F3840AABF6939B4C8511B30 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16EB9F96A851653FC2D5D97E /* DashboardView.swift */; };
+		917B6563C73EF1C83B57F81D /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EA96895695451A4BA61144F /* RootView.swift */; };
+		94D9DB05B4C4002ACAD43630 /* TrainingProgram.swift in Sources */ = {isa = PBXBuildFile; fileRef = 490708E54158C29259163508 /* TrainingProgram.swift */; };
+		96B28503C30BF993BF00CA21 /* NutritionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74D231225B8F41B1C836ECFB /* NutritionView.swift */; };
+		9EEC5992D99CF40EE9041CD8 /* BodySnapshotCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4679A0F51508914D8B395FA2 /* BodySnapshotCard.swift */; };
+		9F6E574C586EA7281D7D84E0 /* ActiveWorkoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47888B1FDEE6BB5398E5AC36 /* ActiveWorkoutView.swift */; };
+		B6BAB6BF2A7C060BDA9D9C34 /* HealthAggregatorWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 34BA9DB98B5F4269CFFA91DF /* HealthAggregatorWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B8DE6D94F7A217820D43EF59 /* RecoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AB091035C2C0DA32D9D2DB5 /* RecoveryView.swift */; };
+		C36923181C1562C760412F5C /* HealthAggregatorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EC3ECE8071EA6559E9715E /* HealthAggregatorApp.swift */; };
+		D2246EADBF2F9D81D15977C0 /* WorkoutModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E76789D7C6B05309388845DF /* WorkoutModels.swift */; };
+		D5ABB4B9D1EB96D7817C65DF /* ActivityRingsCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1850B8604A536F5270430A1 /* ActivityRingsCard.swift */; };
+		E537A2940F11827BB800D355 /* WorkoutCompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFC31265BFE75A85A4D0F34 /* WorkoutCompleteView.swift */; };
+		E9C082BB3B9D7FBD22BAB1BE /* HealthAggregatorWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26AF1274E45EA4CCA9B5E900 /* HealthAggregatorWidgets.swift */; };
+		EC2E98241F927E58A1BAEEE8 /* StepsCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452C6A2C77F37617BA914E1E /* StepsCard.swift */; };
+		ECD1DD2685528745A8A2345A /* BodyCompositionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D8088FF61A1F618FEC0CE13 /* BodyCompositionView.swift */; };
+		F75DB28D3596EFADBD665A02 /* WorkoutStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2B8F4AFF04597C41DFBC1E1 /* WorkoutStore.swift */; };
+		FC3B633CE7071929D772A937 /* ExerciseLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1547F16F5758D18486314361 /* ExerciseLibrary.swift */; };
+		FFC6357A92A2D3663AEA165F /* TodayWorkoutCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B86CCA5E1BC677C6881C5E28 /* TodayWorkoutCard.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B049E39C108ED66A3B16A765 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 50637EB406E391219F87402D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3F7F2A1FEFFFDB1CC7800AF0;
+			remoteInfo = HealthAggregatorWidgets;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		EF2CFC2C094D517E6A022F5D /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				B6BAB6BF2A7C060BDA9D9C34 /* HealthAggregatorWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0EA96895695451A4BA61144F /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		0F62929B9C3F2DFB1ACDCB8F /* HapticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsManager.swift; sourceTree = "<group>"; };
+		1547F16F5758D18486314361 /* ExerciseLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseLibrary.swift; sourceTree = "<group>"; };
+		16EB9F96A851653FC2D5D97E /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		26AF1274E45EA4CCA9B5E900 /* HealthAggregatorWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthAggregatorWidgets.swift; sourceTree = "<group>"; };
+		2B6188B447392C6E4C0A2E7E /* ProgramView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgramView.swift; sourceTree = "<group>"; };
+		33FF662B9E243C0E6317C0AE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		34BA9DB98B5F4269CFFA91DF /* HealthAggregatorWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = HealthAggregatorWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		3B4E6E758D5693BC353129FD /* HealthAggregator.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HealthAggregator.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3DB44D5107B959EB341224CD /* WhoopConnectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhoopConnectView.swift; sourceTree = "<group>"; };
+		4208982CE6818A0C8C912EE1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		452C6A2C77F37617BA914E1E /* StepsCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepsCard.swift; sourceTree = "<group>"; };
+		4679A0F51508914D8B395FA2 /* BodySnapshotCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodySnapshotCard.swift; sourceTree = "<group>"; };
+		47888B1FDEE6BB5398E5AC36 /* ActiveWorkoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveWorkoutView.swift; sourceTree = "<group>"; };
+		490708E54158C29259163508 /* TrainingProgram.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingProgram.swift; sourceTree = "<group>"; };
+		4AB091035C2C0DA32D9D2DB5 /* RecoveryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecoveryView.swift; sourceTree = "<group>"; };
+		4AF9492F11928B8A1E3411B6 /* WhoopModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhoopModels.swift; sourceTree = "<group>"; };
+		4CE937860150C0F262F4FE90 /* HealthAggregator.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HealthAggregator.entitlements; sourceTree = "<group>"; };
+		4D8088FF61A1F618FEC0CE13 /* BodyCompositionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyCompositionView.swift; sourceTree = "<group>"; };
+		52F6BE25CB2FC8F995415722 /* WorkoutListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutListView.swift; sourceTree = "<group>"; };
+		58ED3DE896C42416AF9F3CA3 /* ProgressionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressionEngine.swift; sourceTree = "<group>"; };
+		5BFC31265BFE75A85A4D0F34 /* WorkoutCompleteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutCompleteView.swift; sourceTree = "<group>"; };
+		5D8811C4C83658B4D7493CF9 /* WorkoutHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutHistoryView.swift; sourceTree = "<group>"; };
+		6607FEB457C6F72D3893535D /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		6755904336D70DC9654DF611 /* NutritionCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionCard.swift; sourceTree = "<group>"; };
+		703124B7AEE2677F18007650 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		74D231225B8F41B1C836ECFB /* NutritionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionView.swift; sourceTree = "<group>"; };
+		74F847996A6F582BA186C59F /* RecoveryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecoveryCard.swift; sourceTree = "<group>"; };
+		79AAF972BFEE30BB8FA171B7 /* WorkoutLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutLiveActivity.swift; sourceTree = "<group>"; };
+		A1850B8604A536F5270430A1 /* ActivityRingsCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityRingsCard.swift; sourceTree = "<group>"; };
+		A643B322BD5C5A7934F35C3B /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		AF16BD542890704CB11221C0 /* HealthAggregatorWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HealthAggregatorWidgets.entitlements; sourceTree = "<group>"; };
+		B86CCA5E1BC677C6881C5E28 /* TodayWorkoutCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayWorkoutCard.swift; sourceTree = "<group>"; };
+		BFDA0AAC3128E3A60DC35918 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		C2B8F4AFF04597C41DFBC1E1 /* WorkoutStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutStore.swift; sourceTree = "<group>"; };
+		C2EC3ECE8071EA6559E9715E /* HealthAggregatorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthAggregatorApp.swift; sourceTree = "<group>"; };
+		CDE92B12E1BE74B6DB4A0D89 /* HealthKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitService.swift; sourceTree = "<group>"; };
+		CF7CE2F8F5421FDE76624861 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		D2A815024E97F73CBA6054DC /* SleepCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepCard.swift; sourceTree = "<group>"; };
+		D6EBE2503E51E64BF258330F /* WhoopService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhoopService.swift; sourceTree = "<group>"; };
+		E76789D7C6B05309388845DF /* WorkoutModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutModels.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		03B6563C05297173DF3A2AF2 /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				16EB9F96A851653FC2D5D97E /* DashboardView.swift */,
+				A4AF6A3659C328125F92AC01 /* Cards */,
+			);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		06BBA6E015452C3AF2297915 /* HealthAggregator */ = {
+			isa = PBXGroup;
+			children = (
+				4CE937860150C0F262F4FE90 /* HealthAggregator.entitlements */,
+				33FF662B9E243C0E6317C0AE /* Info.plist */,
+				D6132E39B0DE29299BA90A6A /* App */,
+				AE88FAC1AE5EF4E6B3BB756E /* CoreData */,
+				AF633FCB2ADD6C67EFCEC1A6 /* Design */,
+				EC3055766BD6DAFB0985D0EE /* LiveActivity */,
+				101C881CDE3A5220626081F0 /* Models */,
+				BC67513EB2562DCA8A805A24 /* Services */,
+				833279E98028F8E71883B48B /* Views */,
+			);
+			path = HealthAggregator;
+			sourceTree = "<group>";
+		};
+		101C881CDE3A5220626081F0 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				1547F16F5758D18486314361 /* ExerciseLibrary.swift */,
+				490708E54158C29259163508 /* TrainingProgram.swift */,
+				4AF9492F11928B8A1E3411B6 /* WhoopModels.swift */,
+				E76789D7C6B05309388845DF /* WorkoutModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		181264410D6260CAA8BFED06 /* Workout */ = {
+			isa = PBXGroup;
+			children = (
+				47888B1FDEE6BB5398E5AC36 /* ActiveWorkoutView.swift */,
+				2B6188B447392C6E4C0A2E7E /* ProgramView.swift */,
+				5BFC31265BFE75A85A4D0F34 /* WorkoutCompleteView.swift */,
+				5D8811C4C83658B4D7493CF9 /* WorkoutHistoryView.swift */,
+				52F6BE25CB2FC8F995415722 /* WorkoutListView.swift */,
+			);
+			path = Workout;
+			sourceTree = "<group>";
+		};
+		1C50741A2A54D7B4B1827BF8 /* Nutrition */ = {
+			isa = PBXGroup;
+			children = (
+				74D231225B8F41B1C836ECFB /* NutritionView.swift */,
+			);
+			path = Nutrition;
+			sourceTree = "<group>";
+		};
+		362929791879E39811AE4176 /* Recovery */ = {
+			isa = PBXGroup;
+			children = (
+				4AB091035C2C0DA32D9D2DB5 /* RecoveryView.swift */,
+			);
+			path = Recovery;
+			sourceTree = "<group>";
+		};
+		3CC9DE45985248678ADD9511 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3B4E6E758D5693BC353129FD /* HealthAggregator.app */,
+				34BA9DB98B5F4269CFFA91DF /* HealthAggregatorWidgets.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		805696171BD66AC8187AB741 = {
+			isa = PBXGroup;
+			children = (
+				06BBA6E015452C3AF2297915 /* HealthAggregator */,
+				85B5374FFCF25039E8648E95 /* HealthAggregatorWidgets */,
+				3CC9DE45985248678ADD9511 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		833279E98028F8E71883B48B /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A10E2AF2BC9836F3D548C538 /* Body */,
+				03B6563C05297173DF3A2AF2 /* Dashboard */,
+				1C50741A2A54D7B4B1827BF8 /* Nutrition */,
+				AAC3C87409B07921327349C3 /* Onboarding */,
+				362929791879E39811AE4176 /* Recovery */,
+				FF13123F2E362353AC8C6635 /* Settings */,
+				181264410D6260CAA8BFED06 /* Workout */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		85B5374FFCF25039E8648E95 /* HealthAggregatorWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				AF16BD542890704CB11221C0 /* HealthAggregatorWidgets.entitlements */,
+				26AF1274E45EA4CCA9B5E900 /* HealthAggregatorWidgets.swift */,
+				4208982CE6818A0C8C912EE1 /* Info.plist */,
+			);
+			path = HealthAggregatorWidgets;
+			sourceTree = "<group>";
+		};
+		A10E2AF2BC9836F3D548C538 /* Body */ = {
+			isa = PBXGroup;
+			children = (
+				4D8088FF61A1F618FEC0CE13 /* BodyCompositionView.swift */,
+			);
+			path = Body;
+			sourceTree = "<group>";
+		};
+		A4AF6A3659C328125F92AC01 /* Cards */ = {
+			isa = PBXGroup;
+			children = (
+				A1850B8604A536F5270430A1 /* ActivityRingsCard.swift */,
+				4679A0F51508914D8B395FA2 /* BodySnapshotCard.swift */,
+				6755904336D70DC9654DF611 /* NutritionCard.swift */,
+				74F847996A6F582BA186C59F /* RecoveryCard.swift */,
+				D2A815024E97F73CBA6054DC /* SleepCard.swift */,
+				452C6A2C77F37617BA914E1E /* StepsCard.swift */,
+				B86CCA5E1BC677C6881C5E28 /* TodayWorkoutCard.swift */,
+			);
+			path = Cards;
+			sourceTree = "<group>";
+		};
+		AAC3C87409B07921327349C3 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				6607FEB457C6F72D3893535D /* OnboardingView.swift */,
+				3DB44D5107B959EB341224CD /* WhoopConnectView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		AE88FAC1AE5EF4E6B3BB756E /* CoreData */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = CoreData;
+			sourceTree = "<group>";
+		};
+		AF633FCB2ADD6C67EFCEC1A6 /* Design */ = {
+			isa = PBXGroup;
+			children = (
+				703124B7AEE2677F18007650 /* DesignSystem.swift */,
+				0F62929B9C3F2DFB1ACDCB8F /* HapticsManager.swift */,
+			);
+			path = Design;
+			sourceTree = "<group>";
+		};
+		BC67513EB2562DCA8A805A24 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				CDE92B12E1BE74B6DB4A0D89 /* HealthKitService.swift */,
+				CF7CE2F8F5421FDE76624861 /* KeychainService.swift */,
+				A643B322BD5C5A7934F35C3B /* NotificationService.swift */,
+				58ED3DE896C42416AF9F3CA3 /* ProgressionEngine.swift */,
+				D6EBE2503E51E64BF258330F /* WhoopService.swift */,
+				C2B8F4AFF04597C41DFBC1E1 /* WorkoutStore.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		D6132E39B0DE29299BA90A6A /* App */ = {
+			isa = PBXGroup;
+			children = (
+				C2EC3ECE8071EA6559E9715E /* HealthAggregatorApp.swift */,
+				0EA96895695451A4BA61144F /* RootView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		EC3055766BD6DAFB0985D0EE /* LiveActivity */ = {
+			isa = PBXGroup;
+			children = (
+				79AAF972BFEE30BB8FA171B7 /* WorkoutLiveActivity.swift */,
+			);
+			path = LiveActivity;
+			sourceTree = "<group>";
+		};
+		FF13123F2E362353AC8C6635 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				BFDA0AAC3128E3A60DC35918 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		3F7F2A1FEFFFDB1CC7800AF0 /* HealthAggregatorWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 63C839D380D8FAF79475F4DB /* Build configuration list for PBXNativeTarget "HealthAggregatorWidgets" */;
+			buildPhases = (
+				5ECEAFF4E9D1357CB9B5991F /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HealthAggregatorWidgets;
+			packageProductDependencies = (
+			);
+			productName = HealthAggregatorWidgets;
+			productReference = 34BA9DB98B5F4269CFFA91DF /* HealthAggregatorWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		B28FC0A797447F5048D2AFAC /* HealthAggregator */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C7292D1894947A61F4C5BA52 /* Build configuration list for PBXNativeTarget "HealthAggregator" */;
+			buildPhases = (
+				A5D1E160566F9129CA73CC66 /* Sources */,
+				EF2CFC2C094D517E6A022F5D /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DB5C7FBE78CB897439726533 /* PBXTargetDependency */,
+			);
+			name = HealthAggregator;
+			packageProductDependencies = (
+			);
+			productName = HealthAggregator;
+			productReference = 3B4E6E758D5693BC353129FD /* HealthAggregator.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		50637EB406E391219F87402D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1540;
+				TargetAttributes = {
+					3F7F2A1FEFFFDB1CC7800AF0 = {
+						DevelopmentTeam = "";
+					};
+					B28FC0A797447F5048D2AFAC = {
+						DevelopmentTeam = "";
+					};
+				};
+			};
+			buildConfigurationList = 0683A20B917AA818D77875C4 /* Build configuration list for PBXProject "HealthAggregator" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 805696171BD66AC8187AB741;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 3CC9DE45985248678ADD9511 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B28FC0A797447F5048D2AFAC /* HealthAggregator */,
+				3F7F2A1FEFFFDB1CC7800AF0 /* HealthAggregatorWidgets */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5ECEAFF4E9D1357CB9B5991F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E9C082BB3B9D7FBD22BAB1BE /* HealthAggregatorWidgets.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A5D1E160566F9129CA73CC66 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9F6E574C586EA7281D7D84E0 /* ActiveWorkoutView.swift in Sources */,
+				D5ABB4B9D1EB96D7817C65DF /* ActivityRingsCard.swift in Sources */,
+				ECD1DD2685528745A8A2345A /* BodyCompositionView.swift in Sources */,
+				9EEC5992D99CF40EE9041CD8 /* BodySnapshotCard.swift in Sources */,
+				8F3840AABF6939B4C8511B30 /* DashboardView.swift in Sources */,
+				2AC8C2A82D6B922BC7DF2B54 /* DesignSystem.swift in Sources */,
+				FC3B633CE7071929D772A937 /* ExerciseLibrary.swift in Sources */,
+				14CD2F9B74E7730E9282D5AA /* HapticsManager.swift in Sources */,
+				C36923181C1562C760412F5C /* HealthAggregatorApp.swift in Sources */,
+				4ECC5648444134C5D77E8C78 /* HealthKitService.swift in Sources */,
+				1F393A025B25B3670542398D /* KeychainService.swift in Sources */,
+				8E92A48D782AE18619F389EA /* NotificationService.swift in Sources */,
+				04E9473FE4C0358FA9A2558E /* NutritionCard.swift in Sources */,
+				96B28503C30BF993BF00CA21 /* NutritionView.swift in Sources */,
+				08D4AEFDBD1804EB83DB6151 /* OnboardingView.swift in Sources */,
+				0EBEF8842AF0B8DCD825C398 /* ProgramView.swift in Sources */,
+				5477D5B7247CF3D0622AF258 /* ProgressionEngine.swift in Sources */,
+				8BD281A157A887154AD072C2 /* RecoveryCard.swift in Sources */,
+				B8DE6D94F7A217820D43EF59 /* RecoveryView.swift in Sources */,
+				917B6563C73EF1C83B57F81D /* RootView.swift in Sources */,
+				17DED9D98A87AE18B8B71ACB /* SettingsView.swift in Sources */,
+				2BDE0608773EF60EA41EE0B2 /* SleepCard.swift in Sources */,
+				EC2E98241F927E58A1BAEEE8 /* StepsCard.swift in Sources */,
+				FFC6357A92A2D3663AEA165F /* TodayWorkoutCard.swift in Sources */,
+				94D9DB05B4C4002ACAD43630 /* TrainingProgram.swift in Sources */,
+				6BF2B20B4EF7CB850C4F5CE1 /* WhoopConnectView.swift in Sources */,
+				254956DC7E23500FDD46E231 /* WhoopModels.swift in Sources */,
+				8078739180E976B2A6469864 /* WhoopService.swift in Sources */,
+				E537A2940F11827BB800D355 /* WorkoutCompleteView.swift in Sources */,
+				3D564F9227AF46FAACFE64B5 /* WorkoutHistoryView.swift in Sources */,
+				62F70FDC95661484331D6AE2 /* WorkoutListView.swift in Sources */,
+				75087045C7CA2E36044FCE0A /* WorkoutLiveActivity.swift in Sources */,
+				D2246EADBF2F9D81D15977C0 /* WorkoutModels.swift in Sources */,
+				F75DB28D3596EFADBD665A02 /* WorkoutStore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		DB5C7FBE78CB897439726533 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3F7F2A1FEFFFDB1CC7800AF0 /* HealthAggregatorWidgets */;
+			targetProxy = B049E39C108ED66A3B16A765 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		3AC45638C3D058B2924E38D1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = HealthAggregatorWidgets/HealthAggregatorWidgets.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = HealthAggregatorWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.healthaggregator.app.widgets;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		5215A63CDD4492650C3CF090 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_BITCODE = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		5E0C6567F40DE3CF99BD06BC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_BITCODE = NO;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		8BEEE50B436A57EBBF20CA54 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = HealthAggregator/HealthAggregator.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = HealthAggregator/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.healthaggregator.app;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		C68CE72D5C865CF24A5A4995 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = HealthAggregatorWidgets/HealthAggregatorWidgets.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = HealthAggregatorWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.healthaggregator.app.widgets;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		F3DB919D1BF81FB510E44AA9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = HealthAggregator/HealthAggregator.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = HealthAggregator/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.healthaggregator.app;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0683A20B917AA818D77875C4 /* Build configuration list for PBXProject "HealthAggregator" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5215A63CDD4492650C3CF090 /* Debug */,
+				5E0C6567F40DE3CF99BD06BC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		63C839D380D8FAF79475F4DB /* Build configuration list for PBXNativeTarget "HealthAggregatorWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C68CE72D5C865CF24A5A4995 /* Debug */,
+				3AC45638C3D058B2924E38D1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C7292D1894947A61F4C5BA52 /* Build configuration list for PBXNativeTarget "HealthAggregator" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8BEEE50B436A57EBBF20CA54 /* Debug */,
+				F3DB919D1BF81FB510E44AA9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 50637EB406E391219F87402D /* Project object */;
+}

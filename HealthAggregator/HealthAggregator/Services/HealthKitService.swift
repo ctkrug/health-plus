@@ -1,0 +1,372 @@
+import HealthKit
+import SwiftUI
+
+@Observable
+final class HealthKitService {
+    private let store = HKHealthStore()
+
+    // Cached values
+    var steps: Double = 0
+    var activeCalories: Double = 0
+    var restingCalories: Double = 0
+    var exerciseMinutes: Double = 0
+    var standHours: Double = 0
+    var moveGoal: Double = 500
+    var exerciseGoal: Double = 30
+    var standGoal: Double = 12
+    var heartRate: Double = 0
+    var hrvMssd: Double = 0
+    var restingHR: Double = 0
+    var weight: Double = 0          // kg
+    var bodyFat: Double = 0         // fraction 0–1
+    var leanMass: Double = 0        // kg
+    var bmi: Double = 0
+    var visceralFat: Double = 0
+    var skeletalMuscleMass: Double = 0
+    var bodyWaterPercentage: Double = 0
+    var caloriesConsumed: Double = 0
+    var calorieGoal: Double = 2500
+    var proteinGrams: Double = 0
+    var carbGrams: Double = 0
+    var fatGrams: Double = 0
+    var fiberGrams: Double = 0
+    var waterMl: Double = 0
+    var sleepHours: Double = 0
+    var remHours: Double = 0
+    var deepHours: Double = 0
+    var lightHours: Double = 0
+    var awakeHours: Double = 0
+
+    var stepsHistory: [Double] = []     // last 7 days
+    var weightHistory: [(Date, Double)] = []
+    var bodyFatHistory: [(Date, Double)] = []
+    var hrvHistory: [(Date, Double)] = []
+
+    var isAuthorized = false
+    var isLoading = false
+
+    private let readTypes: Set<HKObjectType> = {
+        let quantityTypes: [HKQuantityTypeIdentifier] = [
+            .stepCount, .activeEnergyBurned, .basalEnergyBurned,
+            .appleExerciseTime, .appleStandTime,
+            .heartRate, .heartRateVariabilitySDNN, .restingHeartRate,
+            .bodyMass, .bodyFatPercentage, .leanBodyMass, .bodyMassIndex,
+            .dietaryEnergyConsumed, .dietaryProtein, .dietaryCarbohydrates,
+            .dietaryFatTotal, .dietaryFiber, .dietaryWater,
+            .vo2Max, .oxygenSaturation,
+        ]
+        var types: Set<HKObjectType> = Set(quantityTypes.compactMap { HKObjectType.quantityType(forIdentifier: $0) })
+        types.insert(HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!)
+        types.insert(HKObjectType.activitySummaryType())
+        types.insert(HKObjectType.workoutType())
+        return types
+    }()
+
+    private let writeTypes: Set<HKSampleType> = {
+        let quantityTypes: [HKQuantityTypeIdentifier] = [
+            .activeEnergyBurned, .dietaryWater, .distanceSwimming,
+        ]
+        var types: Set<HKSampleType> = Set(quantityTypes.compactMap { HKSampleType.quantityType(forIdentifier: $0) })
+        types.insert(HKObjectType.workoutType())
+        return types
+    }()
+
+    func requestAuthorization() async {
+        guard HKHealthStore.isHealthDataAvailable() else { return }
+        do {
+            try await store.requestAuthorization(toShare: writeTypes, read: readTypes)
+            isAuthorized = true
+            await refresh()
+        } catch {
+            print("HealthKit auth error: \(error)")
+        }
+    }
+
+    func refresh() async {
+        isLoading = true
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await self.fetchSteps() }
+            group.addTask { await self.fetchActivityRings() }
+            group.addTask { await self.fetchHeartMetrics() }
+            group.addTask { await self.fetchBodyComposition() }
+            group.addTask { await self.fetchNutrition() }
+            group.addTask { await self.fetchSleep() }
+            group.addTask { await self.fetchStepsHistory() }
+            group.addTask { await self.fetchWeightHistory() }
+            group.addTask { await self.fetchHRVHistory() }
+        }
+        isLoading = false
+    }
+
+    func performBackgroundSync() async {
+        await refresh()
+    }
+
+    // MARK: - Fetch implementations
+
+    private func fetchSteps() async {
+        steps = await fetchQuantitySum(
+            .stepCount, unit: .count(),
+            start: Calendar.current.startOfDay(for: Date()), end: Date()
+        )
+    }
+
+    private func fetchActivityRings() async {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let components = calendar.dateComponents([.day, .month, .year], from: today)
+        let predicate = HKQuery.predicate(forActivitySummariesBetweenStart: components, end: components)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKActivitySummaryQuery(predicate: predicate) { [weak self] _, summaries, _ in
+                guard let self, let summary = summaries?.first else {
+                    continuation.resume()
+                    return
+                }
+                Task { @MainActor in
+                    self.activeCalories = summary.activeEnergyBurned.doubleValue(for: .kilocalorie())
+                    self.exerciseMinutes = summary.appleExerciseTime.doubleValue(for: .minute())
+                    self.standHours = summary.appleStandHours.doubleValue(for: .count())
+                    self.moveGoal = summary.activeEnergyBurnedGoal.doubleValue(for: .kilocalorie())
+                    self.exerciseGoal = summary.appleExerciseTimeGoal.doubleValue(for: .minute())
+                    self.standGoal = summary.appleStandHoursGoal.doubleValue(for: .count())
+                    continuation.resume()
+                }
+            }
+            store.execute(query)
+        }
+    }
+
+    private func fetchHeartMetrics() async {
+        let now = Date()
+        let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: now)!
+
+        async let hr = fetchQuantityMostRecent(.heartRate, unit: HKUnit.count().unitDivided(by: .minute()), start: weekAgo, end: now)
+        async let rhr = fetchQuantityMostRecent(.restingHeartRate, unit: HKUnit.count().unitDivided(by: .minute()), start: weekAgo, end: now)
+        async let hrv = fetchQuantityMostRecent(.heartRateVariabilitySDNN, unit: .secondUnit(with: .milli), start: weekAgo, end: now)
+
+        let (heartRateVal, rhrVal, hrvVal) = await (hr, rhr, hrv)
+        await MainActor.run {
+            heartRate = heartRateVal
+            restingHR = rhrVal
+            hrvMssd = hrvVal
+        }
+    }
+
+    private func fetchBodyComposition() async {
+        let now = Date()
+        let yearAgo = Calendar.current.date(byAdding: .year, value: -1, to: now)!
+
+        async let w = fetchQuantityMostRecent(.bodyMass, unit: .gramUnit(with: .kilo), start: yearAgo, end: now)
+        async let bf = fetchQuantityMostRecent(.bodyFatPercentage, unit: .percent(), start: yearAgo, end: now)
+        async let lm = fetchQuantityMostRecent(.leanBodyMass, unit: .gramUnit(with: .kilo), start: yearAgo, end: now)
+        async let bmiVal = fetchQuantityMostRecent(.bodyMassIndex, unit: .count(), start: yearAgo, end: now)
+
+        let (wVal, bfVal, lmVal, bmiValue) = await (w, bf, lm, bmiVal)
+        await MainActor.run {
+            weight = wVal
+            bodyFat = bfVal   // .percent() returns a fraction 0–1, no division needed
+            leanMass = lmVal
+            bmi = bmiValue
+        }
+    }
+
+    private func fetchNutrition() async {
+        let start = Calendar.current.startOfDay(for: Date())
+        let end = Date()
+
+        async let cal = fetchQuantitySum(.dietaryEnergyConsumed, unit: .kilocalorie(), start: start, end: end)
+        async let prot = fetchQuantitySum(.dietaryProtein, unit: .gram(), start: start, end: end)
+        async let carbs = fetchQuantitySum(.dietaryCarbohydrates, unit: .gram(), start: start, end: end)
+        async let fat = fetchQuantitySum(.dietaryFatTotal, unit: .gram(), start: start, end: end)
+        async let fiber = fetchQuantitySum(.dietaryFiber, unit: .gram(), start: start, end: end)
+        async let water = fetchQuantitySum(.dietaryWater, unit: .literUnit(with: .milli), start: start, end: end)
+
+        let (c, p, cr, f, fi, w) = await (cal, prot, carbs, fat, fiber, water)
+        await MainActor.run {
+            caloriesConsumed = c
+            proteinGrams = p
+            carbGrams = cr
+            fatGrams = f
+            fiberGrams = fi
+            waterMl = w
+        }
+    }
+
+    private func fetchSleep() async {
+        guard let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else { return }
+        let start = Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: Date()))!
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: Date())
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(sampleType: sleepType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { [weak self] _, samples, _ in
+                guard let self else { continuation.resume(); return }
+                let sleepSamples = samples as? [HKCategorySample] ?? []
+                var asleep = 0.0, rem = 0.0, deep = 0.0, light = 0.0, awake = 0.0
+
+                for sample in sleepSamples {
+                    let duration = sample.endDate.timeIntervalSince(sample.startDate) / 3600
+                    switch HKCategoryValueSleepAnalysis(rawValue: sample.value) {
+                    case .asleepREM: rem += duration
+                    case .asleepDeep: deep += duration
+                    case .asleepCore: light += duration
+                    case .awake: awake += duration
+                    default: break
+                    }
+                    if sample.value != HKCategoryValueSleepAnalysis.awake.rawValue
+                        && sample.value != HKCategoryValueSleepAnalysis.inBed.rawValue {
+                        asleep += duration
+                    }
+                }
+
+                Task { @MainActor in
+                    self.sleepHours = asleep
+                    self.remHours = rem
+                    self.deepHours = deep
+                    self.lightHours = light
+                    self.awakeHours = awake
+                    continuation.resume()
+                }
+            }
+            store.execute(query)
+        }
+    }
+
+    private func fetchStepsHistory() async {
+        let now = Date()
+        let calendar = Calendar.current
+        var dailySteps: [Double] = []
+        for day in (0..<7).reversed() {
+            let start = calendar.date(byAdding: .day, value: -day, to: calendar.startOfDay(for: now))!
+            let end = calendar.date(byAdding: .day, value: 1, to: start)!
+            let v = await fetchQuantitySum(.stepCount, unit: .count(), start: start, end: end)
+            dailySteps.append(v)
+        }
+        await MainActor.run { stepsHistory = dailySteps }
+    }
+
+    private func fetchWeightHistory() async {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .bodyMass) else { return }
+        let start = Calendar.current.date(byAdding: .day, value: -90, to: Date())!
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: Date())
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sort]) { [weak self] _, samples, _ in
+                guard let self else { continuation.resume(); return }
+                let data = (samples as? [HKQuantitySample] ?? []).map { s in
+                    (s.startDate, s.quantity.doubleValue(for: .gramUnit(with: .kilo)))
+                }
+                Task { @MainActor in self.weightHistory = data; continuation.resume() }
+            }
+            store.execute(query)
+        }
+    }
+
+    private func fetchHRVHistory() async {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN) else { return }
+        let start = Calendar.current.date(byAdding: .day, value: -30, to: Date())!
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: Date())
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sort]) { [weak self] _, samples, _ in
+                guard let self else { continuation.resume(); return }
+                let data = (samples as? [HKQuantitySample] ?? []).map { s in
+                    (s.startDate, s.quantity.doubleValue(for: .secondUnit(with: .milli)))
+                }
+                Task { @MainActor in self.hrvHistory = data; continuation.resume() }
+            }
+            store.execute(query)
+        }
+    }
+
+    // MARK: - Write workout to HealthKit
+
+    func writeWorkout(_ session: WorkoutSession) async throws {
+        let activityType: HKWorkoutActivityType = session.type.isSwim ? .swimming : .traditionalStrengthTraining
+        let config = HKWorkoutConfiguration()
+        config.activityType = activityType
+        if session.type.isSwim { config.swimmingLocationType = session.type == .poolSwim ? .pool : .openWater }
+
+        let builder = HKWorkoutBuilder(healthStore: store, configuration: config, device: .local())
+        try await builder.beginCollection(at: session.startDate)
+
+        // Add energy burned sample
+        if let endDate = session.endDate {
+            let energySample = HKQuantitySample(
+                type: HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!,
+                quantity: HKQuantity(unit: .kilocalorie(), doubleValue: estimateCalories(session)),
+                start: session.startDate, end: endDate
+            )
+            try await builder.addSamples([energySample])
+
+            // Swim laps
+            if session.type.isSwim {
+                var lapSamples: [HKSample] = []
+                for exercise in session.exercises {
+                    for set in exercise.sets where set.isCompleted {
+                        if let dist = set.distanceMeters {
+                            let lapSample = HKQuantitySample(
+                                type: HKQuantityType.quantityType(forIdentifier: .distanceSwimming)!,
+                                quantity: HKQuantity(unit: .meter(), doubleValue: dist),
+                                start: session.startDate, end: endDate
+                            )
+                            lapSamples.append(lapSample)
+                        }
+                    }
+                }
+                if !lapSamples.isEmpty { try await builder.addSamples(lapSamples) }
+            }
+
+            try await builder.endCollection(at: endDate)
+            try await builder.finishWorkout()
+        }
+    }
+
+    private func estimateCalories(_ session: WorkoutSession) -> Double {
+        // Rough estimate: 5 cal/min for strength, 8 cal/min for swim
+        let minutes = session.duration / 60
+        return minutes * (session.type.isSwim ? 8 : 5)
+    }
+
+    // MARK: - Helpers
+
+    private func fetchQuantitySum(_ identifier: HKQuantityTypeIdentifier, unit: HKUnit, start: Date, end: Date) async -> Double {
+        guard let type = HKQuantityType.quantityType(forIdentifier: identifier) else { return 0 }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, stats, _ in
+                continuation.resume(returning: stats?.sumQuantity()?.doubleValue(for: unit) ?? 0)
+            }
+            store.execute(query)
+        }
+    }
+
+    private func fetchQuantityMostRecent(_ identifier: HKQuantityTypeIdentifier, unit: HKUnit, start: Date, end: Date) async -> Double {
+        guard let type = HKQuantityType.quantityType(forIdentifier: identifier) else { return 0 }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end)
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: 1, sortDescriptors: [sort]) { _, samples, _ in
+                let sample = (samples as? [HKQuantitySample])?.first
+                continuation.resume(returning: sample?.quantity.doubleValue(for: unit) ?? 0)
+            }
+            store.execute(query)
+        }
+    }
+
+    // MARK: - Water quick-add
+    func addWater(ml: Double) async throws {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .dietaryWater) else { return }
+        let sample = HKQuantitySample(
+            type: type,
+            quantity: HKQuantity(unit: .literUnit(with: .milli), doubleValue: ml),
+            start: Date(), end: Date()
+        )
+        try await store.save(sample)
+        waterMl += ml
+    }
+}
