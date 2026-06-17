@@ -104,7 +104,12 @@ final class WhoopService {
         let body = "grant_type=refresh_token&refresh_token=\(rt)&client_id=\(clientID)&client_secret=\(clientSecret)"
         request.httpBody = body.data(using: .utf8)
 
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        if let http = response as? HTTPURLResponse, http.statusCode >= 400 {
+            // Refresh token expired or revoked — force re-auth
+            await MainActor.run { disconnect() }
+            throw WhoopError.notAuthenticated
+        }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         let tokens = try decoder.decode(WhoopTokenResponse.self, from: data)
@@ -131,7 +136,8 @@ final class WhoopService {
         isLoading = true
         defer { isLoading = false }
         do {
-            if let expiry = tokenExpiry, expiry < Date() { try await refreshAccessToken() }
+            // Refresh 60s early to avoid mid-request expiry
+            if let expiry = tokenExpiry, expiry < Date().addingTimeInterval(60) { try await refreshAccessToken() }
             async let recovery = fetchLatestRecovery()
             async let cycle = fetchLatestCycle()
             async let sleep = fetchLatestSleep()

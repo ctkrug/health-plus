@@ -131,7 +131,9 @@ struct ActiveWorkoutView: View {
                     addExercise(def)
                 }
             }
-            .fullScreenCover(isPresented: $showComplete) {
+            .fullScreenCover(isPresented: $showComplete, onDismiss: {
+                dismiss()   // close ActiveWorkoutView once the summary is dismissed
+            }) {
                 WorkoutCompleteView(session: session)
             }
         }
@@ -193,7 +195,8 @@ struct ActiveWorkoutView: View {
 
     private func startTimer() {
         guard timer == nil else { return }  // prevent duplicate timers on re-appear
-        elapsed = 0
+        // Derive elapsed from session start so re-appearing after backgrounding is accurate
+        elapsed = Date().timeIntervalSince(session.startDate)
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             elapsed += 1
             updateLiveActivity()
@@ -203,8 +206,8 @@ struct ActiveWorkoutView: View {
     }
 
     private func stopTimer() {
-        timer?.invalidate()
-        restTimer?.invalidate()
+        timer?.invalidate();     timer = nil
+        restTimer?.invalidate(); restTimer = nil
         prTimer?.invalidate()
     }
 
