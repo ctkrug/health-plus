@@ -444,6 +444,8 @@ struct ProgramWorkoutCard: View {
 
 // MARK: - New Program View (basic)
 
+// MARK: - New Program Builder
+
 struct NewProgramView: View {
     @Environment(AppState.self) var appState
     @Environment(\.dismiss) var dismiss
@@ -451,52 +453,267 @@ struct NewProgramView: View {
     @State private var name = ""
     @State private var description = ""
     @State private var goal: ProgramGoal = .strength
-    @State private var daysPerWeek = 3
+    @State private var workouts: [DraftWorkout] = [DraftWorkout(label: "A"), DraftWorkout(label: "B")]
+    @State private var editingWorkoutIndex: Int? = nil
+    @State private var showExercisePicker = false
 
     private var store: WorkoutStore { appState.workoutStore }
+    private let labels = ["A","B","C","D","E","F","G"]
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.appBackground.ignoresSafeArea()
-                Form {
-                    Section("Program Name") {
-                        TextField("e.g. My 5×5 Program", text: $name)
-                    }
-                    Section("Description") {
-                        TextField("Optional notes", text: $description)
-                    }
-                    Section("Goal") {
-                        Picker("Goal", selection: $goal) {
-                            ForEach(ProgramGoal.allCases, id: \.self) { g in
-                                Text(g.rawValue).tag(g)
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Name & goal
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("PROGRAM DETAILS")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(Color.textTertiary)
+                                .tracking(1)
+
+                            TextField("Program name (e.g. My 5×5)", text: $name)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(Color.textPrimary)
+                                .padding(12)
+                                .background(Color.cardBackground)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                            TextField("Description (optional)", text: $description)
+                                .font(.system(size: 14))
+                                .foregroundStyle(Color.textSecondary)
+                                .padding(12)
+                                .background(Color.cardBackground)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                            Picker("Goal", selection: $goal) {
+                                ForEach(ProgramGoal.allCases, id: \.self) { g in
+                                    Text(g.rawValue).tag(g)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                        }
+                        .padding(.horizontal, 16)
+
+                        // Workout days
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("WORKOUT DAYS")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundStyle(Color.textTertiary)
+                                    .tracking(1)
+                                Spacer()
+                                if workouts.count < 7 {
+                                    Button {
+                                        workouts.append(DraftWorkout(label: labels[workouts.count]))
+                                    } label: {
+                                        Label("Add Day", systemImage: "plus.circle.fill")
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .foregroundStyle(Color.accentBlue)
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 16)
+
+                            ForEach(workouts.indices, id: \.self) { idx in
+                                DraftWorkoutCard(
+                                    workout: $workouts[idx],
+                                    onAddExercise: {
+                                        editingWorkoutIndex = idx
+                                        showExercisePicker = true
+                                    },
+                                    onDelete: workouts.count > 1 ? { workouts.remove(at: idx) } : nil
+                                )
+                                .padding(.horizontal, 16)
                             }
                         }
-                        .pickerStyle(.menu)
+
+                        Color.clear.frame(height: 30)
                     }
-                    Section("Days Per Week") {
-                        Stepper("\(daysPerWeek) days", value: $daysPerWeek, in: 1...7)
-                    }
+                    .padding(.top, 16)
                 }
-                .scrollContentBackground(.hidden)
             }
             .navigationTitle("New Program")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
+                        .foregroundStyle(Color.textSecondary)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Create") {
-                        let prog = TrainingProgram(name: name.isEmpty ? "My Program" : name,
-                                                   description: description, daysPerWeek: daysPerWeek, goal: goal)
-                        store.saveProgram(prog)
-                        dismiss()
+                    Button("Save") { saveProgram() }
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(name.isEmpty ? Color.textTertiary : Color.accentBlue)
+                        .disabled(name.isEmpty)
+                }
+            }
+            .sheet(isPresented: $showExercisePicker) {
+                if let idx = editingWorkoutIndex {
+                    ExercisePickerView { def in
+                        let pe = ProgramExercise(
+                            exerciseName: def.name,
+                            equipment: def.primaryEquipment.first ?? .barbell,
+                            orderIndex: workouts[idx].exercises.count,
+                            rule: def.defaultRule,
+                            isSwim: def.isSwim
+                        )
+                        workouts[idx].exercises.append(pe)
                     }
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Color.accentBlue)
                 }
             }
         }
+    }
+
+    private func saveProgram() {
+        let programWorkouts = workouts.enumerated().map { idx, draft in
+            ProgramWorkout(
+                name: draft.name.isEmpty ? "Workout \(draft.label)" : draft.name,
+                label: draft.label,
+                type: .custom,
+                exercises: draft.exercises
+            )
+        }
+        var prog = TrainingProgram(
+            name: name,
+            description: description,
+            daysPerWeek: workouts.count,
+            goal: goal
+        )
+        prog.workouts = programWorkouts
+        store.saveProgram(prog)
+        dismiss()
+    }
+}
+
+// MARK: - Draft models (local to builder, not persisted)
+
+struct DraftWorkout {
+    var label: String
+    var name: String = ""
+    var exercises: [ProgramExercise] = []
+}
+
+struct DraftWorkoutCard: View {
+    @Binding var workout: DraftWorkout
+    let onAddExercise: () -> Void
+    let onDelete: (() -> Void)?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("WORKOUT \(workout.label)")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(Color.accentBlue)
+                    .tracking(0.5)
+                Spacer()
+                if let del = onDelete {
+                    Button(action: del) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color.textTertiary)
+                    }
+                }
+            }
+
+            TextField("Day name (optional, e.g. Push)", text: $workout.name)
+                .font(.system(size: 14))
+                .foregroundStyle(Color.textPrimary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
+                .background(Color.appBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            if workout.exercises.isEmpty {
+                Text("No exercises yet. Tap below to add.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.textTertiary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 8)
+            } else {
+                ForEach(workout.exercises.indices, id: \.self) { i in
+                    ProgramExerciseRow(exercise: $workout.exercises[i]) {
+                        workout.exercises.remove(at: i)
+                    }
+                }
+            }
+
+            Button {
+                onAddExercise()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Add Exercise")
+                }
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Color.accentBlue)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(Color.accentBlue.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+        }
+        .padding(14)
+        .background(Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Color.cardBorder, lineWidth: 0.5)
+        )
+    }
+}
+
+struct ProgramExerciseRow: View {
+    @Binding var exercise: ProgramExercise
+    let onDelete: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(exercise.exerciseName)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.textPrimary)
+                HStack(spacing: 6) {
+                    Text(exercise.equipment.rawValue)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(Color.accentBlue)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.accentBlue.opacity(0.12))
+                        .clipShape(Capsule())
+                    Text("\(exercise.rule.sets) sets · \(exercise.rule.minReps)–\(exercise.rule.maxReps) reps")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.textSecondary)
+                }
+            }
+            Spacer()
+            // Sets stepper
+            HStack(spacing: 4) {
+                Button {
+                    if exercise.rule.sets > 1 { exercise.rule.sets -= 1 }
+                } label: {
+                    Image(systemName: "minus.circle")
+                        .foregroundStyle(Color.textTertiary)
+                }
+                Text("\(exercise.rule.sets)")
+                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(Color.textPrimary)
+                    .frame(width: 20, alignment: .center)
+                Button {
+                    if exercise.rule.sets < 10 { exercise.rule.sets += 1 }
+                } label: {
+                    Image(systemName: "plus.circle")
+                        .foregroundStyle(Color.accentBlue)
+                }
+            }
+            Button(action: onDelete) {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(Color.textTertiary)
+                    .font(.system(size: 18))
+            }
+        }
+        .padding(10)
+        .background(Color.appBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }

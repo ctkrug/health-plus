@@ -1,5 +1,6 @@
 import CoreData
 import SwiftUI
+import WidgetKit
 
 @Observable
 final class WorkoutStore {
@@ -118,6 +119,7 @@ final class WorkoutStore {
         isInWorkout = false
         updateTemplateLastUsed(session.name)
         if fromProgram { advanceActiveProgram() }
+        writeWidgetWorkoutData(finished)
     }
 
     func discardCurrentWorkout() {
@@ -437,5 +439,17 @@ final class WorkoutStore {
         fetch.predicate = NSPredicate(format: "id == %@", id as CVarArg)
         if let obj = (try? ctx.fetch(fetch))?.first { ctx.delete(obj) }
         try? ctx.save()
+    }
+
+    // MARK: - Widget data
+
+    private func writeWidgetWorkoutData(_ session: WorkoutSession) {
+        let defaults = UserDefaults(suiteName: "group.com.ctkrug.healthplus")
+        defaults?.set(session.name, forKey: "widget_lastWorkoutName")
+        defaults?.set(Int(session.duration / 60), forKey: "widget_lastWorkoutDuration")
+        let wasToday = Calendar.current.isDateInToday(session.startDate)
+        defaults?.set(wasToday, forKey: "widget_lastWorkoutToday")
+        defaults?.set(streak.currentDays, forKey: "widget_streak")
+        WidgetCenter.shared.reloadTimelines(ofKind: "WorkoutSummaryWidget")
     }
 }
