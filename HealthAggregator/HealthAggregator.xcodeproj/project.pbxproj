@@ -23,6 +23,7 @@
 		62F70FDC95661484331D6AE2 /* WorkoutListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52F6BE25CB2FC8F995415722 /* WorkoutListView.swift */; };
 		6BF2B20B4EF7CB850C4F5CE1 /* WhoopConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DB44D5107B959EB341224CD /* WhoopConnectView.swift */; };
 		75087045C7CA2E36044FCE0A /* WorkoutLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79AAF972BFEE30BB8FA171B7 /* WorkoutLiveActivity.swift */; };
+		7CFE47504CA6D22C368AFEF2 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A96155F28882AF43F645505 /* AuthService.swift */; };
 		8078739180E976B2A6469864 /* WhoopService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6EBE2503E51E64BF258330F /* WhoopService.swift */; };
 		8BD281A157A887154AD072C2 /* RecoveryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74F847996A6F582BA186C59F /* RecoveryCard.swift */; };
 		8E92A48D782AE18619F389EA /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A643B322BD5C5A7934F35C3B /* NotificationService.swift */; };
@@ -76,6 +77,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0A96155F28882AF43F645505 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		0EA96895695451A4BA61144F /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		0F62929B9C3F2DFB1ACDCB8F /* HapticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsManager.swift; sourceTree = "<group>"; };
 		1547F16F5758D18486314361 /* ExerciseLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseLibrary.swift; sourceTree = "<group>"; };
@@ -284,6 +286,7 @@
 		BC67513EB2562DCA8A805A24 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				0A96155F28882AF43F645505 /* AuthService.swift */,
 				2E92EE980CBFE446F6389CB3 /* ClaudeService.swift */,
 				57C5A8A36C7DC000CD1F281D /* HabitStore.swift */,
 				CDE92B12E1BE74B6DB4A0D89 /* HealthKitService.swift */,
@@ -423,6 +426,7 @@
 				9F6E574C586EA7281D7D84E0 /* ActiveWorkoutView.swift in Sources */,
 				D5ABB4B9D1EB96D7817C65DF /* ActivityRingsCard.swift in Sources */,
 				1231F8E4ED6923E57DDEB8B4 /* AddHabitView.swift in Sources */,
+				7CFE47504CA6D22C368AFEF2 /* AuthService.swift in Sources */,
 				ECD1DD2685528745A8A2345A /* BodyCompositionView.swift in Sources */,
 				9EEC5992D99CF40EE9041CD8 /* BodySnapshotCard.swift in Sources */,
 				DC232CF4769351BE274D3650 /* ClaudeService.swift in Sources */,

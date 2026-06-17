@@ -45,7 +45,7 @@ struct HealthAggregatorApp: App {
 
     private func handleWhoopRefresh(task: BGAppRefreshTask) {
         scheduleWhoopRefresh()
-        Task {
+        let workTask = Task {
             do {
                 try await appState.whoopService.refreshIfNeeded()
                 task.setTaskCompleted(success: true)
@@ -53,12 +53,20 @@ struct HealthAggregatorApp: App {
                 task.setTaskCompleted(success: false)
             }
         }
+        task.expirationHandler = {
+            workTask.cancel()
+            task.setTaskCompleted(success: false)
+        }
     }
 
     private func handleHealthKitSync(task: BGProcessingTask) {
-        Task {
+        let workTask = Task {
             await appState.healthKitService.performBackgroundSync()
             task.setTaskCompleted(success: true)
+        }
+        task.expirationHandler = {
+            workTask.cancel()
+            task.setTaskCompleted(success: false)
         }
     }
 
