@@ -183,14 +183,22 @@ struct RecoveryView: View {
 
     @ViewBuilder
     var recoveryLabel: some View {
-        let score = whoop.recoveryScore ?? 0
         HStack(spacing: 8) {
-            Circle()
-                .fill(Color.recoveryColor(for: score))
-                .frame(width: 10, height: 10)
-            Text(recoveryStatusText(score))
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Color.textPrimary)
+            if let score = whoop.recoveryScore {
+                Circle()
+                    .fill(Color.recoveryColor(for: score))
+                    .frame(width: 10, height: 10)
+                Text(recoveryStatusText(score))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.textPrimary)
+            } else {
+                Circle()
+                    .fill(Color.textTertiary)
+                    .frame(width: 10, height: 10)
+                Text("Syncing recovery data…")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.textSecondary)
+            }
             Spacer()
             if let updated = whoop.lastUpdated {
                 Text(updated, style: .relative)

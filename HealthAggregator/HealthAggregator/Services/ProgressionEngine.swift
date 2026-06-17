@@ -30,7 +30,7 @@ final class ProgressionEngine {
 
         let lastWeightKg = completedSets.compactMap(\.weightKg).last ?? 0
         let lastReps = completedSets.compactMap(\.reps)
-        let avgReps = lastReps.isEmpty ? 0 : lastReps.reduce(0, +) / lastReps.count
+        let avgReps = lastReps.isEmpty ? 0 : Int((Double(lastReps.reduce(0, +)) / Double(lastReps.count)).rounded())
         let allSetsCompleted = completedSets.count >= rule.sets
 
         // How many sessions since we last increased weight
@@ -97,7 +97,7 @@ final class ProgressionEngine {
             )
         } else if allSetsCompleted && minSetsHitTarget == lastReps.count {
             // All sets hit min but not max → add a rep
-            let currentAvg = lastReps.reduce(0, +) / max(lastReps.count, 1)
+            let currentAvg = lastReps.isEmpty ? 0 : Int((Double(lastReps.reduce(0, +)) / Double(lastReps.count)).rounded())
             let newReps = min(currentAvg + 1, maxReps)
             return ProgressionSuggestion(
                 action: .increaseReps(by: 1),
@@ -111,7 +111,7 @@ final class ProgressionEngine {
             )
         } else {
             // Didn't hit all sets → hold and hit target
-            let currentAvg = lastReps.isEmpty ? minReps : lastReps.reduce(0, +) / lastReps.count
+            let currentAvg = lastReps.isEmpty ? minReps : Int((Double(lastReps.reduce(0, +)) / Double(lastReps.count)).rounded())
             return ProgressionSuggestion(
                 action: .holdSteady,
                 suggestedWeightKg: lastWeightKg > 0 ? lastWeightKg : nil,
@@ -159,7 +159,7 @@ final class ProgressionEngine {
         sessionsSinceIncrease: Int
     ) -> ProgressionSuggestion {
         let allAboveMax = lastReps.allSatisfy { $0 >= rule.maxReps }
-        let avgReps = lastReps.isEmpty ? rule.minReps : lastReps.reduce(0, +) / lastReps.count
+        let avgReps = lastReps.isEmpty ? rule.minReps : Int((Double(lastReps.reduce(0, +)) / Double(lastReps.count)).rounded())
 
         if allAboveMax && lastWeightKg > 0 {
             let newWeight = lastWeightKg + rule.effectiveProgressionKg
