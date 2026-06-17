@@ -9,7 +9,7 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.9"
-    DEVELOPMENT_TEAM: ""          # ← paste your 10-char Team ID here (find it at developer.apple.com/account)
+    DEVELOPMENT_TEAM: "S6FSYG26T8"
     ENABLE_BITCODE: NO
     DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
 
