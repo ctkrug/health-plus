@@ -49,9 +49,9 @@ struct MainTabView: View {
                 }
                 .tag(3)
 
-            NutritionView()
+            HabitsView()
                 .tabItem {
-                    Label("Nutrition", systemImage: "fork.knife")
+                    Label("Habits", systemImage: "checkmark.circle.fill")
                 }
                 .tag(4)
         }
