@@ -34,7 +34,6 @@ targets:
         SUPPORTS_MACCATALYST: NO
     capabilities:
       com.apple.developer.healthkit: enabled
-      com.apple.developer.ActivityKit: enabled
       com.apple.developer.usernotifications.time-sensitive: enabled
       com.apple.security.application-groups:
         - group.com.healthaggregator.app
