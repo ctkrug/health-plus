@@ -226,8 +226,8 @@ struct HabitSetupChatView: View {
                   let category = categoryFromString(catStr) else { return nil }
             let icon = dict["icon"] as? String ?? category.icon
             let colorHex = dict["colorHex"] as? String ?? category.colorHex
-            let slotStr = dict["timeSlot"] as? String ?? "anytime"
-            let slot = HabitTimeSlot(rawValue: slotStr.uppercased()) ?? .anytime
+            let slotStr = (dict["timeSlot"] as? String ?? "anytime").lowercased()
+            let slot: HabitTimeSlot = slotStr == "am" ? .am : slotStr == "pm" ? .pm : .anytime
             let group = dict["routineGroup"] as? String
             return Habit(name: name, category: category, icon: icon, colorHex: colorHex,
                          timeSlot: slot, routineGroup: group)
@@ -236,13 +236,13 @@ struct HabitSetupChatView: View {
 
     private func categoryFromString(_ s: String) -> HabitCategory? {
         switch s.lowercased() {
-        case "supplements":          return .supplements
-        case "skincareAM", "skincare_am", "am skincare": return .skincareAM
-        case "skincareMP", "skincare_pm", "pm skincare": return .skincareMP
-        case "dental":               return .dental
-        case "hydration":            return .hydration
-        case "wellness":             return .wellness
-        default:                     return .custom
+        case "supplements":                          return .supplements
+        case "skineream", "skincare_am", "am skincare", "skincaream": return .skincareAM
+        case "skincaremp", "skincare_pm", "pm skincare", "skincarepm": return .skincareMP
+        case "dental":                               return .dental
+        case "hydration":                            return .hydration
+        case "wellness":                             return .wellness
+        default:                                     return .custom
         }
     }
 

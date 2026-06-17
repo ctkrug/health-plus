@@ -9,9 +9,9 @@ struct SettingsView: View {
     // workoutReminderMinute @State is synced from/to storedReminderMinute
     @State private var calorieGoal = "2500"
     @State private var proteinGoal = "180"
-    @State private var weightUnit: WeightUnit = .lbs
     @State private var showWhoopConnect = false
     @AppStorage("calorieGoal") private var storedCalorieGoal = 2500.0
+    @AppStorage("weightUnit") private var storedWeightUnit = "lbs"
     @AppStorage("proteinGoalGrams") private var storedProteinGoal = 180.0
     @AppStorage("workoutReminderEnabled") private var storedReminderEnabled = false
     @AppStorage("workoutReminderHour") private var storedReminderHour = 7
@@ -48,15 +48,18 @@ struct SettingsView: View {
 
                         IntegrationRow(
                             icon: "scalemass.fill", color: .accentOrange,
-                            name: "Renpho", status: "Enable Health sync in Renpho app"
+                            name: "Renpho", status: "Tap for setup instructions",
+                            instructions: "1. Open the Renpho app\n2. Go to Me → Settings\n3. Enable Apple Health sync\n4. Grant read/write access"
                         )
                         IntegrationRow(
                             icon: "fork.knife", color: .accentGreen,
-                            name: "MyFitnessPal", status: "Enable Health sync in MFP app"
+                            name: "MyFitnessPal", status: "Tap for setup instructions",
+                            instructions: "1. Open MyFitnessPal\n2. Go to More → Apps & Devices\n3. Connect Apple Health\n4. Enable nutrition sync"
                         )
                         IntegrationRow(
                             icon: "figure.pool.swim", color: .accentBlue,
-                            name: "Swim.com", status: "Enable Health sync in Swim.com app"
+                            name: "Swim.com", status: "Tap for setup instructions",
+                            instructions: "1. Open Swim.com\n2. Go to Profile → Connections\n3. Connect Apple Health\n4. Enable workout sync"
                         )
                     }
 
@@ -130,13 +133,46 @@ struct SettingsView: View {
 
                     // Units
                     Section("Units") {
-                        Picker("Weight Unit", selection: $weightUnit) {
-                            Text("Pounds (lb)").tag(WeightUnit.lbs)
-                            Text("Kilograms (kg)").tag(WeightUnit.kg)
+                        Picker("Weight Unit", selection: $storedWeightUnit) {
+                            Text("Pounds (lb)").tag("lbs")
+                            Text("Kilograms (kg)").tag("kg")
                         }
                         .foregroundStyle(Color.textPrimary)
                         .listRowBackground(Color.cardBackground)
                     }
+
+                    // Account
+                    Section("Account") {
+                        if appState.authService.isSignedIn && !appState.authService.isGuest {
+                            HStack {
+                                Image(systemName: "person.crop.circle.fill")
+                                    .font(.system(size: 28))
+                                    .foregroundStyle(Color.accentPurple)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(appState.authService.displayName)
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundStyle(Color.textPrimary)
+                                    if !appState.authService.email.isEmpty {
+                                        Text(appState.authService.email)
+                                            .font(.system(size: 12))
+                                            .foregroundStyle(Color.textSecondary)
+                                    }
+                                }
+                                Spacer()
+                                Button("Sign Out") {
+                                    appState.authService.signOut()
+                                    appState.isOnboardingComplete = false
+                                }
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(Color.accentRed)
+                            }
+                        } else {
+                            Text(appState.authService.isGuest ? "Signed in as Guest — data is local only." : "Not signed in.")
+                                .font(.system(size: 14))
+                                .foregroundStyle(Color.textSecondary)
+                        }
+                    }
+                    .listRowBackground(Color.cardBackground)
 
                     // AI
                     Section("AI Coach") {
@@ -204,26 +240,59 @@ struct IntegrationRow: View {
     let color: Color
     let name: String
     let status: String
+    var instructions: String? = nil
+    @State private var showInstructions = false
 
     var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .font(.system(size: 18))
-                .foregroundStyle(color)
-                .frame(width: 36)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(name)
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(Color.textPrimary)
-                Text(status)
-                    .font(.metricLabel(12))
-                    .foregroundStyle(Color.textSecondary)
+        Button {
+            if instructions != nil { showInstructions = true }
+        } label: {
+            HStack {
+                Image(systemName: icon)
+                    .font(.system(size: 18))
+                    .foregroundStyle(color)
+                    .frame(width: 36)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(name)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(Color.textPrimary)
+                    Text(status)
+                        .font(.metricLabel(12))
+                        .foregroundStyle(Color.textSecondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.textTertiary)
             }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .font(.system(size: 11))
-                .foregroundStyle(Color.textTertiary)
         }
         .listRowBackground(Color.cardBackground)
+        .sheet(isPresented: $showInstructions) {
+            NavigationStack {
+                ZStack {
+                    Color.appBackground.ignoresSafeArea()
+                    VStack(alignment: .leading, spacing: 20) {
+                        Label(name, systemImage: icon)
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundStyle(color)
+                        Text("How to connect \(name) to Health+")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(Color.textPrimary)
+                        Text(instructions ?? "")
+                            .font(.system(size: 15))
+                            .foregroundStyle(Color.textSecondary)
+                            .lineSpacing(6)
+                        Spacer()
+                    }
+                    .padding(24)
+                }
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Done") { showInstructions = false }
+                    }
+                }
+            }
+        }
     }
 }

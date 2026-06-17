@@ -247,9 +247,13 @@ final class WorkoutStore {
             if uniqueDays.last != day { uniqueDays.append(day) }
         }
 
-        // Current streak: contiguous days from today backwards
+        // Current streak: allow today OR yesterday as anchor so streak isn't
+        // broken just because today's session hasn't happened yet
         var current = 0
         var checkDate = calendar.startOfDay(for: Date())
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: checkDate)!
+        let anchor = uniqueDays.first
+        if anchor != checkDate && anchor == yesterday { checkDate = yesterday }
         for day in uniqueDays {
             if day == checkDate {
                 current += 1

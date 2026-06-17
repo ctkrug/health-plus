@@ -85,8 +85,10 @@ final class AppState {
     var workoutStore = WorkoutStore()
     var notificationService = NotificationService()
     var habitStore = HabitStore()
-    var isOnboardingComplete: Bool {
-        get { UserDefaults.standard.bool(forKey: "onboardingComplete") }
-        set { UserDefaults.standard.set(newValue, forKey: "onboardingComplete") }
+    var authService = AuthService()
+
+    // Stored var so @Observable tracks mutations and re-renders RootView
+    var isOnboardingComplete: Bool = UserDefaults.standard.bool(forKey: "onboardingComplete") {
+        didSet { UserDefaults.standard.set(isOnboardingComplete, forKey: "onboardingComplete") }
     }
 }

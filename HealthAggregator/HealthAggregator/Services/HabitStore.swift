@@ -64,6 +64,13 @@ final class HabitStore {
         var streak = 0
         var checkDate = calendar.startOfDay(for: Date())
 
+        // Allow today OR yesterday as anchor so streak isn't 0 just because today isn't done yet
+        let todayKey = HabitLog.dayKey(for: checkDate)
+        let todayDone = logs.contains { $0.habitId == habit.id && $0.dayKey == todayKey && $0.timeSlot == slot }
+        if !todayDone {
+            checkDate = calendar.date(byAdding: .day, value: -1, to: checkDate)!
+        }
+
         while true {
             let key = HabitLog.dayKey(for: checkDate)
             let completed = logs.contains { $0.habitId == habit.id && $0.dayKey == key && $0.timeSlot == slot }

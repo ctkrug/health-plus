@@ -76,10 +76,18 @@ extension Habit {
 }
 
 extension HabitLog {
-    static func dayKey(for date: Date) -> String {
+    // Static formatter: POSIX locale prevents non-Gregorian calendar systems
+    // from producing non-comparable strings; timeZone is explicit for DST safety
+    private static let keyFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
-        return f.string(from: date)
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone.current
+        return f
+    }()
+
+    static func dayKey(for date: Date) -> String {
+        keyFormatter.string(from: date)
     }
 }
 
