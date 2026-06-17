@@ -9,7 +9,7 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.9"
-    DEVELOPMENT_TEAM: ""
+    DEVELOPMENT_TEAM: ""          # ← paste your 10-char Team ID here (find it at developer.apple.com/account)
     ENABLE_BITCODE: NO
     DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
 
@@ -32,6 +32,12 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1"
         SUPPORTS_MACCATALYST: NO
+    capabilities:
+      com.apple.developer.healthkit: enabled
+      com.apple.developer.ActivityKit: enabled
+      com.apple.developer.usernotifications.time-sensitive: enabled
+      com.apple.security.application-groups:
+        - group.com.healthaggregator.app
     dependencies:
       - target: HealthAggregatorWidgets
 
@@ -49,3 +55,6 @@ targets:
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: "1"
         TARGETED_DEVICE_FAMILY: "1"
+    capabilities:
+      com.apple.security.application-groups:
+        - group.com.healthaggregator.app
