@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import ActivityKit
 
 struct ActiveWorkoutView: View {
     @Environment(AppState.self) var appState
@@ -16,6 +17,7 @@ struct ActiveWorkoutView: View {
     @State private var showExercisePicker = false
     @State private var showDiscardAlert = false
     @State private var prTimer: Timer? = nil
+    @State private var liveActivity = LiveActivityManager()
 
     private var store: WorkoutStore { appState.workoutStore }
 
@@ -172,10 +174,12 @@ struct ActiveWorkoutView: View {
         restTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { t in
             if restCountdown > 0 {
                 restCountdown -= 1
+                updateLiveActivity()
             } else {
                 t.invalidate()
                 restTimerRunning = false
                 HapticsManager.restTimerDone()
+                updateLiveActivity()
             }
         }
         appState.notificationService.scheduleRestTimer(seconds: seconds)
@@ -192,7 +196,10 @@ struct ActiveWorkoutView: View {
         elapsed = 0
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             elapsed += 1
+            updateLiveActivity()
         }
+        let firstExercise = session.exercises.first?.name ?? session.name
+        liveActivity.startActivity(workoutName: session.name, exerciseName: firstExercise)
     }
 
     private func stopTimer() {
@@ -203,6 +210,7 @@ struct ActiveWorkoutView: View {
 
     private func finishWorkout() {
         stopTimer()
+        liveActivity.end()
         let fromProgram = activeProgramExercise(for: session.exercises.first?.name ?? "") != nil
         store.completeWorkout(session, fromProgram: fromProgram)
         showComplete = true
@@ -210,8 +218,24 @@ struct ActiveWorkoutView: View {
 
     private func discardWorkout() {
         stopTimer()
+        liveActivity.end()
         store.discardCurrentWorkout()
         dismiss()
+    }
+
+    private func updateLiveActivity() {
+        let currentExercise = session.exercises.first(where: { !$0.sets.allSatisfy(\.isCompleted) })
+            ?? session.exercises.last
+        let setsDone = currentExercise?.sets.filter(\.isCompleted).count ?? 0
+        let totalSets = currentExercise?.sets.count ?? 0
+        liveActivity.update(
+            exerciseName: currentExercise?.name ?? session.name,
+            setNumber: setsDone + 1,
+            totalSets: max(totalSets, 1),
+            restSeconds: restTimerRunning ? restCountdown : nil,
+            isResting: restTimerRunning,
+            elapsed: Int(elapsed)
+        )
     }
 
     private func addExercise(_ def: ExerciseDefinition) {

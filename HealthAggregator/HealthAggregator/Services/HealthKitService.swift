@@ -1,5 +1,6 @@
 import HealthKit
 import SwiftUI
+import WidgetKit
 
 @Observable
 final class HealthKitService {
@@ -96,6 +97,7 @@ final class HealthKitService {
             group.addTask { await self.fetchHRVHistory() }
         }
         isLoading = false
+        writeWidgetData()
     }
 
     func performBackgroundSync() async {
@@ -328,6 +330,15 @@ final class HealthKitService {
         // Rough estimate: 5 cal/min for strength, 8 cal/min for swim
         let minutes = session.duration / 60
         return minutes * (session.type.isSwim ? 8 : 5)
+    }
+
+    // MARK: - Widget data
+
+    private func writeWidgetData() {
+        let defaults = UserDefaults(suiteName: "group.com.ctkrug.healthplus")
+        defaults?.set(Int(steps), forKey: "widget_steps")
+        defaults?.set(10000, forKey: "widget_stepGoal")
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     // MARK: - Helpers

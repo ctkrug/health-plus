@@ -78,7 +78,7 @@
 		2B6188B447392C6E4C0A2E7E /* ProgramView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgramView.swift; sourceTree = "<group>"; };
 		33FF662B9E243C0E6317C0AE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		34BA9DB98B5F4269CFFA91DF /* HealthAggregatorWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = HealthAggregatorWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		3B4E6E758D5693BC353129FD /* HealthAggregator.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HealthAggregator.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3B4E6E758D5693BC353129FD /* HealthAggregator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HealthAggregator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3DB44D5107B959EB341224CD /* WhoopConnectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhoopConnectView.swift; sourceTree = "<group>"; };
 		4208982CE6818A0C8C912EE1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		452C6A2C77F37617BA914E1E /* StepsCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepsCard.swift; sourceTree = "<group>"; };
@@ -356,9 +356,6 @@
 					3F7F2A1FEFFFDB1CC7800AF0 = {
 						DevelopmentTeam = "";
 					};
-					B28FC0A797447F5048D2AFAC = {
-						DevelopmentTeam = "";
-					};
 				};
 			};
 			buildConfigurationList = 0683A20B917AA818D77875C4 /* Build configuration list for PBXProject "HealthAggregator" */;
@@ -591,6 +588,7 @@
 				CODE_SIGN_ENTITLEMENTS = HealthAggregator/HealthAggregator.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = S6FSYG26T8;
 				INFOPLIST_FILE = HealthAggregator/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -631,6 +629,7 @@
 				CODE_SIGN_ENTITLEMENTS = HealthAggregator/HealthAggregator.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = S6FSYG26T8;
 				INFOPLIST_FILE = HealthAggregator/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
