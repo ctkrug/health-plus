@@ -444,7 +444,7 @@ final class WorkoutStore {
     // MARK: - Widget data
 
     private func writeWidgetWorkoutData(_ session: WorkoutSession) {
-        let defaults = UserDefaults(suiteName: "group.com.ctkrug.healthplus")
+        let defaults = UserDefaults(suiteName: "group.com.healthaggregator.app")
         defaults?.set(session.name, forKey: "widget_lastWorkoutName")
         defaults?.set(Int(session.duration / 60), forKey: "widget_lastWorkoutDuration")
         let wasToday = Calendar.current.isDateInToday(session.startDate)

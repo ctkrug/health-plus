@@ -129,8 +129,8 @@ struct StepsProvider: TimelineProvider {
         completion(StepsEntry(date: .now, steps: 7500, goal: 10000))
     }
     func getTimeline(in context: Context, completion: @escaping (Timeline<StepsEntry>) -> Void) {
-        let steps = UserDefaults(suiteName: "group.com.ctkrug.healthplus")?.integer(forKey: "widget_steps") ?? 0
-        let goal = UserDefaults(suiteName: "group.com.ctkrug.healthplus")?.integer(forKey: "widget_stepGoal") ?? 10000
+        let steps = UserDefaults(suiteName: "group.com.healthaggregator.app")?.integer(forKey: "widget_steps") ?? 0
+        let goal = UserDefaults(suiteName: "group.com.healthaggregator.app")?.integer(forKey: "widget_stepGoal") ?? 10000
         let entry = StepsEntry(date: .now, steps: steps, goal: goal)
         let next = Calendar.current.date(byAdding: .minute, value: 30, to: .now)!
         completion(Timeline(entries: [entry], policy: .after(next)))
@@ -212,7 +212,7 @@ struct WorkoutProvider: TimelineProvider {
         completion(WorkoutEntry(date: .now, workoutName: "Upper Body", duration: 52, wasToday: true, streak: 5))
     }
     func getTimeline(in context: Context, completion: @escaping (Timeline<WorkoutEntry>) -> Void) {
-        let defaults = UserDefaults(suiteName: "group.com.ctkrug.healthplus")
+        let defaults = UserDefaults(suiteName: "group.com.healthaggregator.app")
         let name = defaults?.string(forKey: "widget_lastWorkoutName") ?? "No workout yet"
         let duration = defaults?.integer(forKey: "widget_lastWorkoutDuration") ?? 0
         let wasToday = defaults?.bool(forKey: "widget_lastWorkoutToday") ?? false
