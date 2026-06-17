@@ -2,6 +2,20 @@ import WidgetKit
 import SwiftUI
 import ActivityKit
 
+// MARK: - Shared types (duplicated from main target — widget has no access to app code)
+
+struct WorkoutActivityAttributes: ActivityAttributes {
+    public struct ContentState: Codable, Hashable {
+        var exerciseName: String
+        var setNumber: Int
+        var totalSets: Int
+        var restSeconds: Int?
+        var isResting: Bool
+        var elapsedSeconds: Int
+    }
+    var workoutName: String
+}
+
 // MARK: - Live Activity Widget
 
 struct WorkoutLiveActivityWidget: Widget {
