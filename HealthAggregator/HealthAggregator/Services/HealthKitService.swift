@@ -86,7 +86,7 @@ final class HealthKitService {
         guard HKHealthStore.isHealthDataAvailable() else { return }
         do {
             try await store.requestAuthorization(toShare: writeTypes, read: readTypes)
-            isAuthorized = true
+            await MainActor.run { isAuthorized = true }
             await refresh()
         } catch {
             print("HealthKit auth error: \(error)")
@@ -94,9 +94,11 @@ final class HealthKitService {
     }
 
     func refresh() async {
-        isLoading = true
-        // Pull user goals from Settings so cards reflect what the user configured
-        loadGoalsFromSettings()
+        // Mutate observable state on the main actor (avoids background-thread @Observable races)
+        await MainActor.run {
+            isLoading = true
+            loadGoalsFromSettings()
+        }
         await withTaskGroup(of: Void.self) { group in
             group.addTask { await self.fetchSteps() }
             group.addTask { await self.fetchActivityRings() }
@@ -113,8 +115,10 @@ final class HealthKitService {
             group.addTask { await self.fetchVO2Max() }
             group.addTask { await self.fetchWeeklyExerciseMinutes() }
         }
-        isLoading = false
-        writeWidgetData()
+        await MainActor.run {
+            isLoading = false
+            writeWidgetData()
+        }
     }
 
     // MARK: - Profile & fitness fetches (see docs/SCIENCE.md §2, §5, §6)
@@ -132,16 +136,22 @@ final class HealthKitService {
             .height, unit: .meter(),
             start: Calendar.current.date(byAdding: .year, value: -10, to: Date())!, end: Date()
         )
+        let finalSex = sex, finalAge = computedAge   // immutable copies for the closure
         await MainActor.run {
-            biologicalSex = sex
-            if computedAge > 0 { age = computedAge }
+            biologicalSex = finalSex
+            if finalAge > 0 { age = finalAge }
             if height > 0 { heightMeters = height }
         }
     }
 
     private func fetchVO2Max() async {
+        // Build the unit explicitly. The string "ml/kg*min" parses to ml·min/kg, which is
+        // INCOMPATIBLE with VO2max's stored unit ml/(kg·min) — and doubleValue(for:) then
+        // raises an uncatchable Obj-C exception. Constructing it removes that crash.
+        let vo2Unit = HKUnit.literUnit(with: .milli)
+            .unitDivided(by: HKUnit.gramUnit(with: .kilo).unitMultiplied(by: .minute()))
         let value = await fetchQuantityMostRecent(
-            .vo2Max, unit: HKUnit(from: "ml/kg*min"),
+            .vo2Max, unit: vo2Unit,
             start: Calendar.current.date(byAdding: .month, value: -6, to: Date())!, end: Date()
         )
         await MainActor.run { vo2Max = value }
@@ -176,10 +186,11 @@ final class HealthKitService {
     // MARK: - Fetch implementations
 
     private func fetchSteps() async {
-        steps = await fetchQuantitySum(
+        let value = await fetchQuantitySum(
             .stepCount, unit: .count(),
             start: Calendar.current.startOfDay(for: Date()), end: Date()
         )
+        await MainActor.run { steps = value }
     }
 
     private func fetchActivityRings() async {
