@@ -18,12 +18,27 @@ struct SettingsView: View {
     @AppStorage("workoutReminderEnabled") private var storedReminderEnabled = false
     @AppStorage("workoutReminderHour") private var storedReminderHour = 7
     @AppStorage("workoutReminderMinute") private var storedReminderMinute = 0
+    @AppStorage("appearanceMode") private var appearanceMode = AppAppearance.system.rawValue
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.appBackground.ignoresSafeArea()
                 List {
+                    // Appearance
+                    Section("Appearance") {
+                        Picker(selection: $appearanceMode) {
+                            ForEach(AppAppearance.allCases) { mode in
+                                Label(mode.label, systemImage: mode.icon).tag(mode.rawValue)
+                            }
+                        } label: {
+                            Text("Theme").foregroundStyle(Color.textPrimary)
+                        }
+                        .pickerStyle(.menu)
+                        .tint(Color.accentBlue)
+                        .listRowBackground(Color.cardBackground)
+                    }
+
                     // WHOOP
                     Section("Integrations") {
                         HStack {

@@ -31,8 +31,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.ctkrug.healthplus
         INFOPLIST_FILE: HealthAggregator/Info.plist
         CODE_SIGN_ENTITLEMENTS: HealthAggregator/HealthAggregator.entitlements
-        MARKETING_VERSION: "1.2.5"
-        CURRENT_PROJECT_VERSION: "14"
+        MARKETING_VERSION: "1.3.0"
+        CURRENT_PROJECT_VERSION: "15"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1"
         SUPPORTS_MACCATALYST: NO
@@ -45,6 +45,21 @@ targets:
     dependencies:
       - target: HealthAggregatorWidgets
 
+  HealthAggregatorTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: HealthAggregatorTests
+    dependencies:
+      - target: HealthAggregator
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ctkrug.healthplus.tests
+        GENERATE_INFOPLIST_FILE: YES
+        # TEST_HOST / BUNDLE_LOADER are added automatically by XcodeGen because this
+        # unit-test target depends on the HealthAggregator app target.
+
   HealthAggregatorWidgets:
     type: app-extension
     platform: iOS
@@ -56,8 +71,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.ctkrug.healthplus.widgets
         INFOPLIST_FILE: HealthAggregatorWidgets/Info.plist
         CODE_SIGN_ENTITLEMENTS: HealthAggregatorWidgets/HealthAggregatorWidgets.entitlements
-        MARKETING_VERSION: "1.2.5"
-        CURRENT_PROJECT_VERSION: "14"
+        MARKETING_VERSION: "1.3.0"
+        CURRENT_PROJECT_VERSION: "15"
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME: AccentColor
     capabilities:
@@ -69,8 +84,14 @@ schemes:
     build:
       targets:
         HealthAggregator: all
+        HealthAggregatorTests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - HealthAggregatorTests
     archive:
       config: Release
     profile:
