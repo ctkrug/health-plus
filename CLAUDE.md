@@ -13,7 +13,9 @@ GitHub: https://github.com/ctkrug/health-plus
 Run the release script, which pushes to GitHub *and* uploads to TestFlight in one shot:
 
 ```bash
-./scripts/release.sh "short description of what changed"
+./scripts/release.sh "short description"           # patch: 1.0.0 → 1.0.1 (default — bug fixes)
+./scripts/release.sh --minor "short description"   # minor: 1.0.0 → 1.1.0 (new features)
+./scripts/release.sh --major "short description"   # major: 1.0.0 → 2.0.0 (breaking / landmark)
 ```
 
 (One-time prerequisite: `./scripts/setup-asc.sh` to store the App Store Connect API key.
