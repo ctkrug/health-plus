@@ -20,8 +20,10 @@ final class WhoopService {
     private let baseURL = "https://api.prod.whoop.com/developer/v1"
     private let authBaseURL = "https://api.prod.whoop.com/oauth/oauth2"
 
-    // Strong reference prevents ASWebAuthenticationSession from being deallocated mid-flow
+    // Strong references prevent deallocation during the OAuth flow
+    // presentationContextProvider is weak, so we must hold our own strong ref to AnchorProvider
     private var authSession: ASWebAuthenticationSession?
+    private var anchorProvider: AnchorProvider?
 
     private var clientID: String {
         Bundle.main.object(forInfoDictionaryKey: "WhoopClientID") as? String ?? ""
@@ -65,11 +67,14 @@ final class WhoopService {
                     else { cont.resume(throwing: WhoopError.invalidCallback) }
                 }
                 session.prefersEphemeralWebBrowserSession = true
-                session.presentationContextProvider = AnchorProvider(anchor: anchor)
-                authSession = session   // retain until callback fires
+                let provider = AnchorProvider(anchor: anchor)
+                session.presentationContextProvider = provider
+                anchorProvider = provider  // strong ref — presentationContextProvider is weak
+                authSession = session
                 session.start()
             }
             authSession = nil
+            anchorProvider = nil
             try await handleCallback(url: result)
         } catch let e as ASWebAuthenticationSessionError where e.code == .canceledLogin {
             // User cancelled — not an error, just dismiss silently

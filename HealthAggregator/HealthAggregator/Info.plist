@@ -70,7 +70,7 @@
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>AnthropicAPIKey</key>
-    <string>YOUR_KEY_HERE</string>
+    <string>$(ANTHROPIC_API_KEY)</string>
     <key>WhoopClientID</key>
     <string>9e96d47e-ad4d-40cc-96dd-795115dc1479</string>
     <key>WhoopClientSecret</key>
