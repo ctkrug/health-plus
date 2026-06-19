@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# Xcode build artifacts
+HealthAggregator/build/
+DerivedData/
+*.xcarchive
+*.ipa
+
+# Xcode user state (per-developer, not shared)
+xcuserdata/
+*.xcuserstate
+
+# Local secrets — App Store Connect API keys, etc. (never commit)
+scripts/.env
+*.p8

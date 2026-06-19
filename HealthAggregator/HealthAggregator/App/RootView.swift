@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(AppState.self) var appState
+    @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab = 0
 
     var body: some View {
@@ -15,6 +16,15 @@ struct RootView: View {
                     guard appState.notificationService.isAuthorized else { return }
                     appState.notificationService.scheduleDailySummary()
                     appState.notificationService.scheduleWeeklyRecap()
+                }
+                .onChange(of: scenePhase) { _, phase in
+                    guard phase == .active else { return }
+                    // Refresh stale data and re-validate the Apple ID when returning to the app
+                    Task {
+                        await appState.healthKitService.refresh()
+                        await appState.whoopService.refresh()
+                        await appState.authService.checkCredentialState()
+                    }
                 }
         }
     }

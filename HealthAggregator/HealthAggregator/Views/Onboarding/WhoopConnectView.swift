@@ -111,9 +111,10 @@ struct WhoopConnectView: View {
         isConnecting = true
         errorMessage = nil
 
-        // Get the key window as anchor
-        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let window = scene.windows.first
+        // Get the key window of the active scene as the presentation anchor
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        let activeScene = scenes.first { $0.activationState == .foregroundActive } ?? scenes.first
+        guard let window = activeScene?.windows.first(where: \.isKeyWindow) ?? activeScene?.windows.first
         else {
             errorMessage = "Could not present authentication"
             isConnecting = false

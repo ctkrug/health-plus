@@ -59,3 +59,15 @@ targets:
     capabilities:
       com.apple.security.application-groups:
         - group.com.ctkrug.healthplus
+
+schemes:
+  HealthAggregator:
+    build:
+      targets:
+        HealthAggregator: all
+    run:
+      config: Debug
+    archive:
+      config: Release
+    profile:
+      config: Release

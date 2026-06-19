@@ -518,6 +518,9 @@ struct SetRow: View {
     @FocusState private var weightFocused: Bool
     @FocusState private var repsFocused: Bool
 
+    @AppStorage("weightUnit") private var weightUnitRaw = "lbs"
+    private var unit: WeightUnit { weightUnitRaw == "kg" ? .kg : .lbs }
+
     var isActive: Bool { !workoutSet.isCompleted }
     var bgColor: Color { workoutSet.isCompleted ? Color.accentGreen.opacity(0.15) : Color.cardBackground }
 
@@ -538,7 +541,7 @@ struct SetRow: View {
 
             // Weight input
             HStack(spacing: 4) {
-                TextField("lbs", text: $weightText)
+                TextField(unit.rawValue, text: $weightText)
                     .keyboardType(.decimalPad)
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundStyle(Color.textPrimary)
@@ -548,7 +551,7 @@ struct SetRow: View {
                     .padding(.vertical, 6)
                     .background(Color.cardBorder.opacity(0.8))
                     .clipShape(RoundedRectangle(cornerRadius: 6))
-                Text("lb").font(.metricLabel(10)).foregroundStyle(Color.textTertiary)
+                Text(unit.rawValue).font(.metricLabel(10)).foregroundStyle(Color.textTertiary)
             }
             .frame(width: 80)
 
@@ -583,7 +586,7 @@ struct SetRow: View {
             // Only initialize from model if fields are empty — prevents LazyVStack re-appears
             // from clobbering text the user has already typed but not yet logged
             if weightText.isEmpty {
-                weightText = workoutSet.weightKg.map { String(format: "%.1f", $0 / 0.453592) } ?? ""
+                weightText = workoutSet.weightKg.map { String(format: "%.1f", $0 / unit.multiplierToKg) } ?? ""
             }
             if repsText.isEmpty {
                 repsText = workoutSet.reps.map { "\($0)" } ?? ""
@@ -593,12 +596,15 @@ struct SetRow: View {
 
     private var previousLabel: String {
         guard let w = workoutSet.targetWeightKg, let r = workoutSet.targetReps else { return "—" }
-        return "\(String(format: "%.1f", w / 0.453592)) × \(r)"
+        return "\(String(format: "%.1f", w / unit.multiplierToKg)) × \(r)"
     }
 
     private func logSet() {
-        // Parse fields
-        if let lbs = Double(weightText) { workoutSet.weightKg = lbs * 0.453592 }
+        // Parse fields — convert from the user's preferred unit to kg for storage
+        if let entered = Double(weightText) {
+            workoutSet.weightKg = entered * unit.multiplierToKg
+            workoutSet.weightUnit = unit
+        }
         if let r = Int(repsText) { workoutSet.reps = r }
         workoutSet.isCompleted.toggle()
         workoutSet.completedAt = workoutSet.isCompleted ? Date() : nil
