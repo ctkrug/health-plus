@@ -335,7 +335,7 @@ final class HealthKitService {
     // MARK: - Widget data
 
     private func writeWidgetData() {
-        let defaults = UserDefaults(suiteName: "group.com.charliekrug.healthplus")
+        let defaults = UserDefaults(suiteName: "group.com.ctkrug.healthplus")
         defaults?.set(Int(steps), forKey: "widget_steps")
         defaults?.set(10000, forKey: "widget_stepGoal")
         WidgetCenter.shared.reloadAllTimelines()
