@@ -43,8 +43,8 @@
     </array>
     <key>BGTaskSchedulerPermittedIdentifiers</key>
     <array>
-        <string>com.ctkrug.healthplus.whoopRefresh</string>
-        <string>com.ctkrug.healthplus.healthkitSync</string>
+        <string>com.charliekrug.healthplus.whoopRefresh</string>
+        <string>com.charliekrug.healthplus.healthkitSync</string>
     </array>
     <key>UILaunchScreen</key>
     <dict/>
@@ -79,7 +79,7 @@
     <array>
         <dict>
             <key>CFBundleURLName</key>
-            <string>com.ctkrug.healthplus</string>
+            <string>com.charliekrug.healthplus</string>
             <key>CFBundleURLSchemes</key>
             <array>
                 <string>healthaggregator</string>

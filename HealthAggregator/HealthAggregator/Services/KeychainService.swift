@@ -13,7 +13,7 @@ enum KeychainService {
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrAccount: key.rawValue,
-            kSecAttrService: "com.ctkrug.healthplus",
+            kSecAttrService: "com.charliekrug.healthplus",
             kSecValueData: data,
         ]
         SecItemDelete(query as CFDictionary)
@@ -24,7 +24,7 @@ enum KeychainService {
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrAccount: key.rawValue,
-            kSecAttrService: "com.ctkrug.healthplus",
+            kSecAttrService: "com.charliekrug.healthplus",
             kSecReturnData: true,
             kSecMatchLimit: kSecMatchLimitOne,
         ]
@@ -38,7 +38,7 @@ enum KeychainService {
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrAccount: key.rawValue,
-            kSecAttrService: "com.ctkrug.healthplus",
+            kSecAttrService: "com.charliekrug.healthplus",
         ]
         SecItemDelete(query as CFDictionary)
     }
