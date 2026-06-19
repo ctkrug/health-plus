@@ -33,10 +33,10 @@ struct WhoopRecovery: Codable, Identifiable {
 }
 
 struct WhoopRecoveryScore: Codable {
-    let userCalibrating: Bool
-    let recoveryScore: Double
-    let restingHeartRate: Double
-    let hrvRmssdMilli: Double
+    let userCalibrating: Bool?
+    let recoveryScore: Double?
+    let restingHeartRate: Double?
+    let hrvRmssdMilli: Double?
     let spo2Percentage: Double?
     let skinTempCelsius: Double?
 

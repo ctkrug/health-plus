@@ -144,25 +144,35 @@ final class WhoopService {
     func refresh() async {
         guard isConnected else { return }
         await MainActor.run { isLoading = true }
-        do {
-            if let expiry = tokenExpiry, expiry < Date().addingTimeInterval(60) { try await refreshAccessToken() }
-            async let recovery = fetchLatestRecovery()
-            async let cycle = fetchLatestCycle()
-            async let sleep = fetchLatestSleep()
-            let (rec, cyc, slp) = try await (recovery, cycle, sleep)
-            await MainActor.run {
-                snapshot.recoveryScore = rec?.score?.recoveryScore
-                snapshot.hrv = rec?.score?.hrvRmssdMilli
-                snapshot.restingHR = rec?.score?.restingHeartRate
-                snapshot.strain = cyc?.score?.strain
-                snapshot.sleepPerformance = slp?.score?.sleepPerformancePercentage
-                snapshot.lastUpdated = Date()
-                isLoading = false
-                saveToCache()
+
+        // Refresh the token first if it's near expiry; if that fails we bail (disconnect handled inside).
+        if let expiry = tokenExpiry, expiry < Date().addingTimeInterval(60) {
+            do { try await refreshAccessToken() }
+            catch {
+                print("WHOOP token refresh failed: \(error)")
+                await MainActor.run { isLoading = false }
+                return
             }
-        } catch {
-            print("WHOOP refresh error: \(error)")
-            await MainActor.run { isLoading = false }
+        }
+
+        // Fetch each metric independently — one endpoint failing (e.g. no recovery yet during
+        // calibration) must not wipe out the others.
+        async let recovery = try? fetchLatestRecovery()
+        async let cycle = try? fetchLatestCycle()
+        async let sleep = try? fetchLatestSleep()
+        let (rec, cyc, slp) = await (recovery, cycle, sleep)
+
+        await MainActor.run {
+            if let score = rec?.score {
+                snapshot.recoveryScore = score.recoveryScore
+                snapshot.hrv = score.hrvRmssdMilli
+                snapshot.restingHR = score.restingHeartRate
+            }
+            if let strain = cyc?.score?.strain { snapshot.strain = strain }
+            if let perf = slp?.score?.sleepPerformancePercentage { snapshot.sleepPerformance = perf }
+            snapshot.lastUpdated = Date()
+            isLoading = false
+            saveToCache()
         }
     }
 

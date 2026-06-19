@@ -46,6 +46,10 @@ struct RecoveryView: View {
             .sheet(isPresented: $showWhoopConnect) {
                 WhoopConnectView()
             }
+            .task {
+                // Pull fresh data when the tab appears if connected but data is missing/stale.
+                if isConnected { await appState.whoopService.refresh() }
+            }
         }
     }
 

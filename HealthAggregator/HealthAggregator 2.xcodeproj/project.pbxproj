@@ -29,7 +29,6 @@
 		75087045C7CA2E36044FCE0A /* WorkoutLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79AAF972BFEE30BB8FA171B7 /* WorkoutLiveActivity.swift */; };
 		7CFE47504CA6D22C368AFEF2 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A96155F28882AF43F645505 /* AuthService.swift */; };
 		8078739180E976B2A6469864 /* WhoopService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6EBE2503E51E64BF258330F /* WhoopService.swift */; };
-		882A40CF1D121CE4F689E7C0 /* MetricDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E6443891309E9B8CFC0900 /* MetricDetailView.swift */; };
 		8BD281A157A887154AD072C2 /* RecoveryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74F847996A6F582BA186C59F /* RecoveryCard.swift */; };
 		8DC425894DAD15334CF9DB2B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 68112667AEB42CABFF6101B0 /* PrivacyInfo.xcprivacy */; };
 		8E92A48D782AE18619F389EA /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A643B322BD5C5A7934F35C3B /* NotificationService.swift */; };
@@ -88,7 +87,6 @@
 		0A96155F28882AF43F645505 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		0EA96895695451A4BA61144F /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		0F62929B9C3F2DFB1ACDCB8F /* HapticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsManager.swift; sourceTree = "<group>"; };
-		11E6443891309E9B8CFC0900 /* MetricDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricDetailView.swift; sourceTree = "<group>"; };
 		146D00E454A7F71EFA333FD3 /* HabitLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitLibraryView.swift; sourceTree = "<group>"; };
 		1547F16F5758D18486314361 /* ExerciseLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseLibrary.swift; sourceTree = "<group>"; };
 		16EB9F96A851653FC2D5D97E /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
@@ -208,7 +206,6 @@
 		362929791879E39811AE4176 /* Recovery */ = {
 			isa = PBXGroup;
 			children = (
-				11E6443891309E9B8CFC0900 /* MetricDetailView.swift */,
 				4AB091035C2C0DA32D9D2DB5 /* RecoveryView.swift */,
 			);
 			path = Recovery;
@@ -510,7 +507,6 @@
 				5407760519FE30A808A4523F /* InsightComponents.swift in Sources */,
 				2200137CA65F87E49E4A241C /* InsightsEngine.swift in Sources */,
 				1F393A025B25B3670542398D /* KeychainService.swift in Sources */,
-				882A40CF1D121CE4F689E7C0 /* MetricDetailView.swift in Sources */,
 				8E92A48D782AE18619F389EA /* NotificationService.swift in Sources */,
 				04E9473FE4C0358FA9A2558E /* NutritionCard.swift in Sources */,
 				96B28503C30BF993BF00CA21 /* NutritionView.swift in Sources */,
@@ -553,7 +549,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = HealthAggregatorWidgets/HealthAggregatorWidgets.entitlements;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 12;
 				INFOPLIST_FILE = HealthAggregatorWidgets/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -561,7 +557,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.2.5;
+				MARKETING_VERSION = 1.2.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ctkrug.healthplus.widgets;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -699,14 +695,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = HealthAggregator/HealthAggregator.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 12;
 				INFOPLIST_FILE = HealthAggregator/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2.5;
+				MARKETING_VERSION = 1.2.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ctkrug.healthplus;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
@@ -719,7 +715,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = HealthAggregatorWidgets/HealthAggregatorWidgets.entitlements;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 12;
 				INFOPLIST_FILE = HealthAggregatorWidgets/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -727,7 +723,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.2.5;
+				MARKETING_VERSION = 1.2.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ctkrug.healthplus.widgets;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -740,14 +736,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = HealthAggregator/HealthAggregator.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 12;
 				INFOPLIST_FILE = HealthAggregator/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2.5;
+				MARKETING_VERSION = 1.2.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ctkrug.healthplus;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
