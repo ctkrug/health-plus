@@ -33,4 +33,18 @@ enum HapticsManager {
     static func light() {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
+
+    static func medium() {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+    }
+
+    static func celebration() {
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        }
+    }
 }
