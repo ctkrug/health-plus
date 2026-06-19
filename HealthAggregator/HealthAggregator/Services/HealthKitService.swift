@@ -66,6 +66,7 @@ final class HealthKitService {
         ]
         var types: Set<HKObjectType> = Set(quantityTypes.compactMap { HKObjectType.quantityType(forIdentifier: $0) })
         types.insert(HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!)
+        if let sh = HKObjectType.categoryType(forIdentifier: .appleStandHour) { types.insert(sh) }
         types.insert(HKObjectType.activitySummaryType())
         types.insert(HKObjectType.workoutType())
         if let sex = HKObjectType.characteristicType(forIdentifier: .biologicalSex) { types.insert(sex) }
@@ -194,28 +195,39 @@ final class HealthKitService {
     }
 
     private func fetchActivityRings() async {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        let components = calendar.dateComponents([.day, .month, .year], from: today)
-        let predicate = HKQuery.predicate(forActivitySummariesBetweenStart: components, end: components)
+        // HKActivitySummaryQuery's predicate creation throws an ObjC exception on iOS 26 —
+        // use individual statistics/sample queries instead.
+        let start = Calendar.current.startOfDay(for: Date())
+        let end = Date()
 
+        async let cal = fetchQuantitySum(.activeEnergyBurned, unit: .kilocalorie(), start: start, end: end)
+        async let ex  = fetchQuantitySum(.appleExerciseTime, unit: .minute(), start: start, end: end)
+        let standVal = await fetchStandHoursToday(start: start, end: end)
+        let (calVal, exVal) = await (cal, ex)
+
+        await MainActor.run {
+            activeCalories = calVal
+            exerciseMinutes = exVal
+            standHours = standVal
+            // Ring goals keep their defaults (500 kcal / 30 min / 12 h) — goal APIs are
+            // only available through HKActivitySummaryQuery which we avoid above.
+        }
+    }
+
+    private func fetchStandHoursToday(start: Date, end: Date) async -> Double {
+        // Stand hours in HealthKit is a category type, not a quantity type.
+        // Each sample represents one hour in which the user stood for ≥1 min.
+        guard let type = HKObjectType.categoryType(forIdentifier: .appleStandHour) else { return 0 }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end)
         return await withCheckedContinuation { continuation in
-            let query = HKActivitySummaryQuery(predicate: predicate) { [weak self] _, summaries, _ in
-                guard let self, let summary = summaries?.first else {
-                    continuation.resume()
-                    return
-                }
-                Task { @MainActor in
-                    self.activeCalories = self.safeDouble(summary.activeEnergyBurned, unit: .kilocalorie())
-                    self.exerciseMinutes = self.safeDouble(summary.appleExerciseTime, unit: .minute())
-                    self.standHours = self.safeDouble(summary.appleStandHours, unit: .count())
-                    self.moveGoal = self.safeDouble(summary.activeEnergyBurnedGoal, unit: .kilocalorie())
-                    self.exerciseGoal = self.safeDouble(summary.appleExerciseTimeGoal, unit: .minute())
-                    self.standGoal = self.safeDouble(summary.appleStandHoursGoal, unit: .count())
-                    continuation.resume()
-                }
+            let query = HKSampleQuery(sampleType: type, predicate: predicate,
+                                      limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, _ in
+                let stood = (samples as? [HKCategorySample] ?? []).filter {
+                    $0.value == HKCategoryValueAppleStandHour.stood.rawValue
+                }.count
+                continuation.resume(returning: Double(stood))
             }
-            store.execute(query)
+            self.store.execute(query)
         }
     }
 
