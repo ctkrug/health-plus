@@ -39,6 +39,13 @@ final class HealthKitService {
     var lightHours: Double = 0
     var awakeHours: Double = 0
 
+    // Profile / fitness (for the personalized insights engine — see docs/SCIENCE.md)
+    var biologicalSex: HKBiologicalSex = .notSet
+    var age: Int = 0
+    var heightMeters: Double = 0
+    var vo2Max: Double = 0                  // mL/kg/min
+    var weeklyExerciseMinutes: Double = 0   // last 7 days, Apple exercise time
+
     var stepsHistory: [Double] = []     // last 7 days
     var weightHistory: [(Date, Double)] = []
     var bodyFatHistory: [(Date, Double)] = []
@@ -55,12 +62,14 @@ final class HealthKitService {
             .bodyMass, .bodyFatPercentage, .leanBodyMass, .bodyMassIndex,
             .dietaryEnergyConsumed, .dietaryProtein, .dietaryCarbohydrates,
             .dietaryFatTotal, .dietaryFiber, .dietaryWater,
-            .vo2Max, .oxygenSaturation,
+            .vo2Max, .oxygenSaturation, .height,
         ]
         var types: Set<HKObjectType> = Set(quantityTypes.compactMap { HKObjectType.quantityType(forIdentifier: $0) })
         types.insert(HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!)
         types.insert(HKObjectType.activitySummaryType())
         types.insert(HKObjectType.workoutType())
+        if let sex = HKObjectType.characteristicType(forIdentifier: .biologicalSex) { types.insert(sex) }
+        if let dob = HKObjectType.characteristicType(forIdentifier: .dateOfBirth) { types.insert(dob) }
         return types
     }()
 
@@ -100,9 +109,48 @@ final class HealthKitService {
             group.addTask { await self.fetchWeightHistory() }
             group.addTask { await self.fetchBodyFatHistory() }
             group.addTask { await self.fetchHRVHistory() }
+            group.addTask { await self.fetchProfile() }
+            group.addTask { await self.fetchVO2Max() }
+            group.addTask { await self.fetchWeeklyExerciseMinutes() }
         }
         isLoading = false
         writeWidgetData()
+    }
+
+    // MARK: - Profile & fitness fetches (see docs/SCIENCE.md §2, §5, §6)
+
+    private func fetchProfile() async {
+        // Biological sex + age are read-only "characteristics" (synchronous, may throw if not shared)
+        var sex: HKBiologicalSex = .notSet
+        var computedAge = 0
+        if let s = try? store.biologicalSex() { sex = s.biologicalSex }
+        if let dob = try? store.dateOfBirthComponents(),
+           let year = Calendar.current.date(from: dob) {
+            computedAge = Calendar.current.dateComponents([.year], from: year, to: Date()).year ?? 0
+        }
+        let height = await fetchQuantityMostRecent(
+            .height, unit: .meter(),
+            start: Calendar.current.date(byAdding: .year, value: -10, to: Date())!, end: Date()
+        )
+        await MainActor.run {
+            biologicalSex = sex
+            if computedAge > 0 { age = computedAge }
+            if height > 0 { heightMeters = height }
+        }
+    }
+
+    private func fetchVO2Max() async {
+        let value = await fetchQuantityMostRecent(
+            .vo2Max, unit: HKUnit(from: "ml/kg*min"),
+            start: Calendar.current.date(byAdding: .month, value: -6, to: Date())!, end: Date()
+        )
+        await MainActor.run { vo2Max = value }
+    }
+
+    private func fetchWeeklyExerciseMinutes() async {
+        let start = Calendar.current.date(byAdding: .day, value: -7, to: Date())!
+        let value = await fetchQuantitySum(.appleExerciseTime, unit: .minute(), start: start, end: Date())
+        await MainActor.run { weeklyExerciseMinutes = value }
     }
 
     private func loadGoalsFromSettings() {

@@ -31,6 +31,15 @@ struct BodyCompositionView: View {
     private var bodyFatPct: Double { hk.bodyFat * 100 }
     private var leanMassLbs: Double { hk.leanMass / 0.453592 }
 
+    private var metrics: UserMetrics {
+        UserMetrics.build(hk: hk, whoop: appState.whoopService.snapshot, store: appState.workoutStore)
+    }
+    private var bodyInsights: [MetricInsight] { InsightsEngine.bodyInsights(metrics) }
+    private var proteinFooter: String? {
+        guard let p = InsightsEngine.proteinTarget(metrics) else { return nil }
+        return "Protein target: \(p.low)–\(p.high) g/day (1.6–2.2 g/kg) to build and retain muscle."
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -57,6 +66,12 @@ struct BodyCompositionView: View {
                         }
                         .card()
                         .padding(.horizontal, 16)
+
+                        // Personalized targets & insights (science-backed — see docs/SCIENCE.md)
+                        if !bodyInsights.isEmpty {
+                            InsightsCard(title: "Your Targets", insights: bodyInsights, footer: proteinFooter)
+                                .padding(.horizontal, 16)
+                        }
 
                         // Range picker
                         Picker("Range", selection: $selectedRange) {

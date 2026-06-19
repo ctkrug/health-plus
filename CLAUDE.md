@@ -117,6 +117,28 @@ SourceKit "cannot find type X in scope" diagnostics during single-file edits are
 
 ---
 
+## Personalized insights engine (science-backed coaching)
+
+The app gives trainer-style, personalized targets and recommendations. Everything is centralized and
+documented:
+
+- **`Services/InsightsEngine.swift`** — pure functions (body fat, FFMI/muscle, VO₂max, cardio volume,
+  steps, protein, sleep, recovery guidance). No thresholds anywhere else. Each function cites the
+  section of `docs/SCIENCE.md` it implements.
+- **`Models/HealthInsights.swift`** — the `UserMetrics` snapshot + `UserMetrics.build(hk:whoop:store:)`
+  factory, plus `MetricInsight` / `RecoveryGuidance` / `MetricRating` types.
+- **`docs/SCIENCE.md`** — ⭐ the source of truth: every threshold with a cited reference (ACSM, FRIEND
+  registry VO₂max norms, Kouri FFMI, Aragon/Helms muscle-gain rates, Paluch steps, Morton protein,
+  WHOOP recovery bands, etc.). **When you change a number in code, update the matching section here.**
+- **UI:** `Views/Insights/InsightComponents.swift` (`InsightsCard`, `InsightRow`, `RecoveryGuidanceCard`).
+  Surfaced on the **Body** tab ("Your Targets" + protein) and **Recovery** tab (training guidance).
+- **Profile inputs** (biological sex, age, height, VO₂max, weekly exercise minutes) are read from
+  HealthKit in `HealthKitService`. The engine degrades gracefully when any are missing.
+
+To tune the coaching logic: edit thresholds in `InsightsEngine.swift` + update `docs/SCIENCE.md`.
+To add a new insight: add a function to the engine, a `MetricInsight` it returns, and include it in
+the relevant aggregator (`bodyInsights`) or view.
+
 ## Known limitations / future work
 - Weight unit (lb/kg) setting is respected in the **workout logging** flow; history/summary
   displays still render in lb.
