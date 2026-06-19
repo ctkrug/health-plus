@@ -146,11 +146,10 @@ final class HealthKitService {
     }
 
     private func fetchVO2Max() async {
-        // "ml/kg/min" (two slashes) correctly parses as mL·kg⁻¹·min⁻¹.
-        // The old string "ml/kg*min" parsed left-to-right as mL·min/kg (wrong), causing an
-        // uncatchable Obj-C exception in doubleValue(for:). fetchQuantityMostRecent also guards
-        // with is(compatibleWith:) as a belt-and-suspenders check.
-        let vo2Unit = HKUnit(from: "ml/kg/min")
+        // Never use HKUnit(from:) for compound units — the string parser throws an ObjC
+        // exception on iOS 26 for any multi-component unit string. Build it via the API instead.
+        let vo2Unit = HKUnit.literUnit(with: .milli)
+            .unitDivided(by: HKUnit.gramUnit(with: .kilo).unitMultiplied(by: .minute()))
         let value = await fetchQuantityMostRecent(
             .vo2Max, unit: vo2Unit,
             start: Calendar.current.date(byAdding: .month, value: -6, to: Date())!, end: Date()
