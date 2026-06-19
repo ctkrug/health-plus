@@ -48,6 +48,38 @@ In App Store Connect → TestFlight → the build → **Manage Compliance → No
 
 ---
 
+## Crashes & TestFlight feedback (routine)
+
+After a release, check for crashes and tester feedback:
+
+```bash
+./scripts/testflight-status.sh
+```
+
+This uses the App Store Connect API key to print recent builds + their processing state, plus
+**TestFlight tester feedback and crash submissions** (the comment testers type in the in-app popup,
+their device/OS, etc.). It pulled the real "App crashes after connecting to health app" report that
+caught the VO₂max bug. Run it whenever a build is out or a tester reports something.
+
+For a **symbolicated stack trace** of a specific crash:
+```bash
+./scripts/crashlogs.sh /path/to/HealthAggregator-….ips   # grab the .ips from the phone or AirDrop
+./scripts/crashlogs.sh                                     # or pull from a USB device (needs libimobiledevice)
+```
+Also: **Xcode → Window → Organizer → Crashes** auto-symbolicates (dSYMs are uploaded with each release;
+`DEBUG_INFORMATION_FORMAT = dwarf-with-dsym`), and **App Store Connect → TestFlight → Feedback** has the
+same data in the web UI.
+
+### ⚠️ HealthKit crash gotcha (learned the hard way)
+HealthKit raises **Objective-C exceptions** that Swift `try/catch` CANNOT catch — they crash the app.
+The usual causes, all of which must be prevented *by construction*:
+- **Wrong unit in `doubleValue(for:)`** — e.g. `HKUnit(from: "ml/kg*min")` parses to `ml·min/kg`, which
+  is incompatible with VO₂max's real unit `ml/(kg·min)`. Always build compound units explicitly with
+  `unitDivided(by:)`/`unitMultiplied(by:)`.
+- **`HKStatisticsQuery` with `.cumulativeSum` on a non-cumulative type** (heart rate, body mass, etc.).
+  Use `fetchQuantitySum` only for cumulative types; `fetchQuantityMostRecent` (HKSampleQuery) for the rest.
+- Mutating `@Observable` service state off the main thread — assign on `MainActor`.
+
 ## Fast iteration (no TestFlight)
 For day-to-day testing, don't use the release script — just run on a device from Xcode:
 open `HealthAggregator/HealthAggregator.xcodeproj`, pick your iPhone, hit **⌘R**.
