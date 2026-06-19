@@ -14,3 +14,6 @@ xcuserdata/
 # Local secrets — App Store Connect API keys, etc. (never commit)
 scripts/.env
 *.p8
+
+# API keys — injected at build time via xcconfig
+HealthAggregator/Secrets.xcconfig
