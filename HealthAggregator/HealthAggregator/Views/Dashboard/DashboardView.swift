@@ -30,10 +30,8 @@ struct DashboardView: View {
                     isRefreshing = false
                 }
             }
-            .navigationTitle("Today")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+            .safeAreaInset(edge: .top, spacing: 0) {
+                AppHeader(subtitle: Date.now.formatted(.dateTime.weekday(.wide).month().day())) {
                     Button {
                         showSettings = true
                     } label: {
@@ -41,12 +39,8 @@ struct DashboardView: View {
                             .foregroundStyle(Color.textSecondary)
                     }
                 }
-                ToolbarItem(placement: .topBarLeading) {
-                    Text(Date.now.formatted(.dateTime.weekday(.wide).month().day()))
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Color.textSecondary)
-                }
             }
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showSettings) {
                 SettingsView()
             }

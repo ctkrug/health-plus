@@ -59,10 +59,8 @@ struct HabitsView: View {
                     }
                 }
             }
-            .navigationTitle("Habits")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+            .safeAreaInset(edge: .top, spacing: 0) {
+                AppHeader {
                     Menu {
                         Button {
                             showAddHabit = true
@@ -82,6 +80,7 @@ struct HabitsView: View {
                     }
                 }
             }
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showSetupChat) {
                 HabitSetupChatView()
             }

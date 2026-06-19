@@ -80,9 +80,8 @@ struct WorkoutListView: View {
                     .padding(.top, 8)
                 }
             }
-            .navigationTitle("Workout")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+            .safeAreaInset(edge: .top, spacing: 0) {
+                AppHeader {
                     Button {
                         showHistory = true
                     } label: {
@@ -91,6 +90,7 @@ struct WorkoutListView: View {
                     }
                 }
             }
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showActiveWorkout) {
                 ActiveWorkoutView(session: store.currentSession ?? WorkoutSession(name: "", type: .custom, startDate: Date()))
             }

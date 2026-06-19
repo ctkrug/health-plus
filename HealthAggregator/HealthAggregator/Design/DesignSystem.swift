@@ -151,6 +151,56 @@ struct MetricRow: View {
     }
 }
 
+// MARK: - App Header
+struct AppHeader<Trailing: View>: View {
+    var subtitle: String? = nil
+    @ViewBuilder let trailing: () -> Trailing
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(alignment: .center, spacing: 8) {
+                HStack(spacing: 7) {
+                    Image(systemName: "waveform.path.ecg")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(Color.accentBlue)
+                    Text("HealthSync")
+                        .font(.system(size: 19, weight: .bold))
+                        .foregroundStyle(Color.textPrimary)
+                        .tracking(0.3)
+                }
+                Spacer()
+                trailing()
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 14)
+            .padding(.bottom, subtitle != nil ? 4 : 14)
+
+            if let subtitle {
+                HStack {
+                    Text(subtitle)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(Color.textSecondary)
+                    Spacer()
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 10)
+            }
+
+            Rectangle()
+                .fill(Color.separatorColor)
+                .frame(height: 0.5)
+        }
+        .background(Color.cardBackground.ignoresSafeArea(edges: .top))
+    }
+}
+
+extension AppHeader where Trailing == EmptyView {
+    init(subtitle: String? = nil) {
+        self.subtitle = subtitle
+        self.trailing = { EmptyView() }
+    }
+}
+
 // MARK: - Section Header
 struct SectionHeader: View {
     let title: String
