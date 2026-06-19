@@ -41,6 +41,8 @@ final class WhoopService {
     // MARK: - OAuth
 
     func startOAuthFlow(presenting anchor: ASPresentationAnchor) async {
+        await MainActor.run { authError = nil }   // clear any previous error
+
         let scopes = "offline read:recovery read:sleep read:workout read:cycles read:body_measurement read:profile"
         let state = UUID().uuidString
         var comps = URLComponents(string: "\(authBaseURL)/auth")!
@@ -68,8 +70,10 @@ final class WhoopService {
             }
             authSession = nil
             try await handleCallback(url: result)
+        } catch let e as ASWebAuthenticationSessionError where e.code == .canceledLogin {
+            // User cancelled — not an error, just dismiss silently
         } catch {
-            authError = error.localizedDescription
+            await MainActor.run { authError = error.localizedDescription }
         }
     }
 
@@ -78,7 +82,7 @@ final class WhoopService {
               let code = comps.queryItems?.first(where: { $0.name == "code" })?.value
         else { throw WhoopError.invalidCallback }
         try await exchangeCode(code)
-        isConnected = true
+        await MainActor.run { isConnected = true }
         await refresh()
     }
 

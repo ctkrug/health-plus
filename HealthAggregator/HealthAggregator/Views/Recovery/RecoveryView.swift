@@ -24,13 +24,8 @@ struct RecoveryView: View {
                     .padding(.top, 8)
                 }
             }
-            .navigationTitle("Recovery")
-            .navigationBarTitleDisplayMode(.large)
-            .sheet(isPresented: $showWhoopConnect) {
-                WhoopConnectView()
-            }
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+            .safeAreaInset(edge: .top, spacing: 0) {
+                AppHeader {
                     if whoop.isConnected {
                         Button {
                             Task { await appState.whoopService.refresh() }
@@ -40,6 +35,10 @@ struct RecoveryView: View {
                         }
                     }
                 }
+            }
+            .toolbar(.hidden, for: .navigationBar)
+            .sheet(isPresented: $showWhoopConnect) {
+                WhoopConnectView()
             }
         }
     }

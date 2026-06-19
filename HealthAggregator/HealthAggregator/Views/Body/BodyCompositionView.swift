@@ -159,8 +159,10 @@ struct BodyCompositionView: View {
                 }
                 .refreshable { await hk.refresh() }
             }
-            .navigationTitle("Body")
-            .navigationBarTitleDisplayMode(.large)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                AppHeader<EmptyView>()
+            }
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 

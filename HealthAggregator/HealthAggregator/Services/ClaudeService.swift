@@ -22,9 +22,9 @@ final class ClaudeService {
     private let endpoint = "https://api.anthropic.com/v1/messages"
     private let model = "claude-haiku-4-5-20251001"
 
-    var apiKey: String {
-        get { UserDefaults.standard.string(forKey: "anthropic_api_key") ?? "" }
-        set { UserDefaults.standard.set(newValue, forKey: "anthropic_api_key") }
+    // Key is bundled in Info.plist under "AnthropicAPIKey" — no user setup required.
+    private var apiKey: String {
+        Bundle.main.object(forInfoDictionaryKey: "AnthropicAPIKey") as? String ?? ""
     }
 
     var hasKey: Bool { !apiKey.isEmpty }
