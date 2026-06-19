@@ -70,9 +70,9 @@
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>WhoopClientID</key>
-    <string>YOUR_WHOOP_CLIENT_ID</string>
+    <string>9e96d47e-ad4d-40cc-96dd-795115dc1479</string>
     <key>WhoopClientSecret</key>
-    <string>YOUR_WHOOP_CLIENT_SECRET</string>
+    <string>65806708855a8f5e61ee87b157165b59e2c57671b11456b1e4adf6226e20a610</string>
     <key>WhoopRedirectURI</key>
     <string>healthaggregator://whoop/callback</string>
     <key>CFBundleURLTypes</key>
