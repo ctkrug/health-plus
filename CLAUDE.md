@@ -5,6 +5,12 @@ WHOOP, and manual workout/habit tracking into one dark-themed dashboard.
 
 GitHub: https://github.com/ctkrug/health-plus
 
+**At the start of any non-trivial task, read [`docs/MAP.md`](docs/MAP.md) first** for orientation —
+it's the structural repo map (ownership tree, data-flow graph, per-file symbol index, "where to
+change X → go to Y"). Regenerate it with the `/map-repo` skill after structural changes. For live
+symbol navigation (find references, symbol overviews), the **Serena** MCP server is configured for
+this repo.
+
 ---
 
 ## ⚡️ Releasing (read this first)
