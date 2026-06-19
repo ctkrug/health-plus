@@ -17,18 +17,23 @@ struct HabitSetupChatView: View {
 
     private let systemPrompt = """
     You are a personal wellness coach helping someone set up their daily habits tracker in a health app. \
-    Your job is to ask them a few conversational questions to understand their supplement stack, skincare routine, \
-    dental hygiene, hydration goals, and any other wellness habits they want to track.
+    Your job is to have a friendly conversation to understand their wellness habits across all areas of life: \
+    morning routine, evening routine, fitness, mindfulness, nutrition, skincare, supplements, dental, hydration, sleep, and more.
 
     Ask ONE question at a time, in a friendly and concise way. Cover:
-    1. Their supplement stack (names of each supplement)
-    2. Their AM skincare routine (each product step: e.g. cleanser, vitamin C serum, sunscreen)
-    3. Their PM skincare routine (each product step: e.g. cleanser, retinol, moisturizer)
-    4. Dental: do they floss, mouthwash, whitening strips?
-    5. Water intake goal (or just a daily water habit)
-    6. Any other wellness habits (meditation, journaling, cold shower, etc.)
+    1. Morning routine (wake time habits, morning workout, journaling, meditation, etc.)
+    2. Supplement stack (names of each supplement)
+    3. AM skincare routine (cleanser, vitamin C serum, sunscreen, etc.)
+    4. Fitness habits (workouts, steps, mobility, stretching)
+    5. Nutrition habits (protein goal, no alcohol, meal prep, etc.)
+    6. Mindfulness (meditation, breathing, gratitude, journaling)
+    7. Evening/PM skincare routine (cleanser, retinol, moisturizer, etc.)
+    8. Dental hygiene (floss, mouthwash, whitening strips)
+    9. Hydration goal
+    10. Sleep habits (consistent bedtime, no screens, sleep tracking)
+    11. Any other habits they want to track
 
-    After you have gathered all the information (usually 5-7 exchanges), output ONLY a JSON block in this exact format — \
+    After you have gathered all the information (usually 6-9 exchanges), output ONLY a JSON block in this exact format — \
     no prose before or after the JSON:
 
     ```json
@@ -42,6 +47,13 @@ struct HabitSetupChatView: View {
           "timeSlot": "anytime"
         },
         {
+          "name": "Morning Meditation",
+          "category": "morning",
+          "icon": "sunrise.fill",
+          "colorHex": "#F59E0B",
+          "timeSlot": "am"
+        },
+        {
           "name": "Cleanser",
           "category": "skincareAM",
           "icon": "drop.fill",
@@ -53,11 +65,19 @@ struct HabitSetupChatView: View {
     }
     ```
 
-    Valid category values: supplements, skincareAM, skincareMP, dental, hydration, wellness, custom
+    Valid category values: morning, evening, fitness, mindfulness, nutrition, sleep, supplements, skincareAM, skincareMP, dental, hydration, wellness, custom
     Valid timeSlot values: am, pm, anytime
-    Valid icons (use these SF Symbol names): pills.fill, drop.fill, mouth.fill, heart.fill, sun.max.fill, \
-    moon.stars.fill, flame.fill, figure.mind.and.body, book.fill, shower.fill, checkmark.circle.fill, \
-    sparkles, wind, leaf.fill
+    Valid icons (use these SF Symbol names): pills.fill, drop.fill, mouth.fill, heart.fill, heart.text.square.fill, \
+    sun.max.fill, sunrise.fill, moon.stars.fill, moon.fill, flame.fill, figure.run, figure.mind.and.body, \
+    figure.strengthtraining.traditional, book.fill, shower.fill, checkmark.circle.fill, sparkles, wind, leaf.fill, \
+    fork.knife, bed.double.fill, brain.head.profile, lungs.fill, stopwatch.fill, trophy.fill, bolt.fill, \
+    hand.raised.fill, eye.fill, music.note, pencil, star.fill
+
+    Use colorHex values that match the category feel:
+    morning → #F59E0B (amber), evening → #8B5CF6 (purple), fitness → #EF4444 (red), mindfulness → #10B981 (teal), \
+    nutrition → #F97316 (orange), sleep → #6366F1 (indigo), supplements → #A855F7 (violet), \
+    skincareAM → #F97316 (orange), skincareMP → #8B5CF6 (purple), dental → #3B82F6 (blue), \
+    hydration → #06B6D4 (cyan), wellness → #10B981 (green)
 
     Once you output the JSON, you are done. Do not add any text after the JSON block.
     """
@@ -174,7 +194,7 @@ struct HabitSetupChatView: View {
 
     private func startConversation() {
         guard messages.isEmpty else { return }
-        let opening = "Hey! I'm your AI wellness coach. I'll help you set up your daily habits tracker in just a few questions. Let's start — what supplements do you take each day? List them all and I'll add each one individually."
+        let opening = "Hey! I'm your AI wellness coach. I'll help you set up your daily habits tracker in just a few questions. We'll cover your morning routine, workouts, nutrition, mindfulness, skincare, supplements, sleep, and more. Let's start — walk me through your ideal morning. What habits or rituals do you do (or want to do) right after waking up?"
         messages.append(ChatMessage(role: .assistant, content: opening))
         conversationHistory.append(ClaudeMessage(role: "assistant", content: opening))
     }
@@ -236,13 +256,19 @@ struct HabitSetupChatView: View {
 
     private func categoryFromString(_ s: String) -> HabitCategory? {
         switch s.lowercased() {
-        case "supplements":                          return .supplements
-        case "skineream", "skincare_am", "am skincare", "skincaream": return .skincareAM
-        case "skincaremp", "skincare_pm", "pm skincare", "skincarepm": return .skincareMP
-        case "dental":                               return .dental
-        case "hydration":                            return .hydration
-        case "wellness":                             return .wellness
-        default:                                     return .custom
+        case "morning":                                                  return .morning
+        case "evening":                                                  return .evening
+        case "fitness":                                                  return .fitness
+        case "mindfulness":                                              return .mindfulness
+        case "nutrition":                                                return .nutrition
+        case "sleep":                                                    return .sleep
+        case "supplements":                                              return .supplements
+        case "skincaream", "skincare_am", "am skincare", "am_skincare": return .skincareAM
+        case "skincarepm", "skincare_pm", "pm skincare", "pm_skincare": return .skincareMP
+        case "dental":                                                   return .dental
+        case "hydration":                                                return .hydration
+        case "wellness":                                                 return .wellness
+        default:                                                         return .custom
         }
     }
 
