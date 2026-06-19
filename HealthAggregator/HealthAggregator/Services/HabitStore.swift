@@ -5,17 +5,23 @@ import SwiftUI
 final class HabitStore {
     var habits: [Habit] = []
     var logs: [HabitLog] = []
+    var pendingMilestone: HabitMilestoneEvent? = nil
+
     var isSetupComplete: Bool {
         get { UserDefaults.standard.bool(forKey: "habitSetupComplete") }
         set { UserDefaults.standard.set(newValue, forKey: "habitSetupComplete") }
     }
 
-    private let habitsKey = "saved_habits"
-    private let logsKey = "saved_habit_logs"
+    private let habitsKey        = "saved_habits"
+    private let logsKey          = "saved_habit_logs"
+    private let allTimeCountsKey = "habit_all_time_counts"
+    private let shownMilestonesKey = "habit_shown_milestones"
 
-    init() {
-        load()
-    }
+    // Permanent total counts (not pruned with logs)
+    private var allTimeCounts: [String: Int] = [:]
+    private var shownMilestones: [String: [Int]] = [:]
+
+    init() { load() }
 
     // MARK: - Completion
 
@@ -28,22 +34,38 @@ final class HabitStore {
         let key = HabitLog.dayKey(for: date)
         if let idx = logs.firstIndex(where: { $0.habitId == habit.id && $0.dayKey == key && $0.timeSlot == slot }) {
             logs.remove(at: idx)
+            let idKey = habit.id.uuidString
+            allTimeCounts[idKey] = max(0, (allTimeCounts[idKey] ?? 0) - 1)
         } else {
             logs.append(HabitLog(habitId: habit.id, dayKey: key, timeSlot: slot, completedAt: Date()))
+            let idKey = habit.id.uuidString
+            let newCount = (allTimeCounts[idKey] ?? 0) + 1
+            allTimeCounts[idKey] = newCount
+            checkMilestone(for: habit, count: newCount)
         }
         save()
         pruneOldLogs()
+    }
+
+    func totalCompletions(for habit: Habit) -> Int {
+        allTimeCounts[habit.id.uuidString] ?? 0
+    }
+
+    private func checkMilestone(for habit: Habit, count: Int) {
+        guard HabitMilestone.counts.contains(count) else { return }
+        let idKey = habit.id.uuidString
+        let shown = shownMilestones[idKey] ?? []
+        guard !shown.contains(count) else { return }
+        shownMilestones[idKey] = shown + [count]
+        pendingMilestone = HabitMilestoneEvent(habit: habit, count: count)
+        saveShownMilestones()
     }
 
     // MARK: - Today progress
 
     func todaySlots() -> [(habit: Habit, slot: HabitTimeSlot)] {
         habits.filter(\.isEnabled).flatMap { habit -> [(Habit, HabitTimeSlot)] in
-            if habit.timeSlot == .anytime {
-                return [(habit, .anytime)]
-            } else {
-                return [(habit, habit.timeSlot)]
-            }
+            habit.timeSlot == .anytime ? [(habit, .anytime)] : [(habit, habit.timeSlot)]
         }
     }
 
@@ -64,7 +86,6 @@ final class HabitStore {
         var streak = 0
         var checkDate = calendar.startOfDay(for: Date())
 
-        // Allow today OR yesterday as anchor so streak isn't 0 just because today isn't done yet
         let todayKey = HabitLog.dayKey(for: checkDate)
         let todayDone = logs.contains { $0.habitId == habit.id && $0.dayKey == todayKey && $0.timeSlot == slot }
         if !todayDone {
@@ -77,9 +98,7 @@ final class HabitStore {
             if completed {
                 streak += 1
                 checkDate = calendar.date(byAdding: .day, value: -1, to: checkDate)!
-            } else {
-                break
-            }
+            } else { break }
         }
         return streak
     }
@@ -90,6 +109,7 @@ final class HabitStore {
         var h = habit
         h.orderIndex = habits.count
         habits.append(h)
+        isSetupComplete = true
         save()
     }
 
@@ -103,6 +123,8 @@ final class HabitStore {
     func deleteHabit(_ habit: Habit) {
         habits.removeAll { $0.id == habit.id }
         logs.removeAll { $0.habitId == habit.id }
+        allTimeCounts.removeValue(forKey: habit.id.uuidString)
+        shownMilestones.removeValue(forKey: habit.id.uuidString)
         save()
     }
 
@@ -115,9 +137,7 @@ final class HabitStore {
     // MARK: - Bulk setup from AI
 
     func applyAIHabits(_ incoming: [Habit]) {
-        habits = incoming.enumerated().map { idx, h in
-            var h2 = h; h2.orderIndex = idx; return h2
-        }
+        habits = incoming.enumerated().map { idx, h in var h2 = h; h2.orderIndex = idx; return h2 }
         isSetupComplete = true
         save()
     }
@@ -137,11 +157,15 @@ final class HabitStore {
     // MARK: - Persistence
 
     private func save() {
-        if let data = try? JSONEncoder().encode(habits) {
-            UserDefaults.standard.set(data, forKey: habitsKey)
-        }
-        if let data = try? JSONEncoder().encode(logs) {
-            UserDefaults.standard.set(data, forKey: logsKey)
+        if let data = try? JSONEncoder().encode(habits)       { UserDefaults.standard.set(data, forKey: habitsKey) }
+        if let data = try? JSONEncoder().encode(logs)         { UserDefaults.standard.set(data, forKey: logsKey) }
+        if let data = try? JSONEncoder().encode(allTimeCounts){ UserDefaults.standard.set(data, forKey: allTimeCountsKey) }
+        saveShownMilestones()
+    }
+
+    private func saveShownMilestones() {
+        if let data = try? JSONEncoder().encode(shownMilestones) {
+            UserDefaults.standard.set(data, forKey: shownMilestonesKey)
         }
     }
 
@@ -153,6 +177,14 @@ final class HabitStore {
         if let data = UserDefaults.standard.data(forKey: logsKey),
            let decoded = try? JSONDecoder().decode([HabitLog].self, from: data) {
             logs = decoded
+        }
+        if let data = UserDefaults.standard.data(forKey: allTimeCountsKey),
+           let decoded = try? JSONDecoder().decode([String: Int].self, from: data) {
+            allTimeCounts = decoded
+        }
+        if let data = UserDefaults.standard.data(forKey: shownMilestonesKey),
+           let decoded = try? JSONDecoder().decode([String: [Int]].self, from: data) {
+            shownMilestones = decoded
         }
     }
 

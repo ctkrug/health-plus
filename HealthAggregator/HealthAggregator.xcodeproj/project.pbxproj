@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		04E9473FE4C0358FA9A2558E /* NutritionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6755904336D70DC9654DF611 /* NutritionCard.swift */; };
 		08D4AEFDBD1804EB83DB6151 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6607FEB457C6F72D3893535D /* OnboardingView.swift */; };
+		0A5E0286D427BEF7BAA2E322 /* HabitLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 146D00E454A7F71EFA333FD3 /* HabitLibraryView.swift */; };
 		0EBEF8842AF0B8DCD825C398 /* ProgramView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B6188B447392C6E4C0A2E7E /* ProgramView.swift */; };
 		1231F8E4ED6923E57DDEB8B4 /* AddHabitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F53FB1956A0CF0DD034F48F /* AddHabitView.swift */; };
 		14CD2F9B74E7730E9282D5AA /* HapticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F62929B9C3F2DFB1ACDCB8F /* HapticsManager.swift */; };
@@ -86,6 +87,7 @@
 		0A96155F28882AF43F645505 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		0EA96895695451A4BA61144F /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		0F62929B9C3F2DFB1ACDCB8F /* HapticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsManager.swift; sourceTree = "<group>"; };
+		146D00E454A7F71EFA333FD3 /* HabitLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitLibraryView.swift; sourceTree = "<group>"; };
 		1547F16F5758D18486314361 /* ExerciseLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseLibrary.swift; sourceTree = "<group>"; };
 		16EB9F96A851653FC2D5D97E /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		26AF1274E45EA4CCA9B5E900 /* HealthAggregatorWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthAggregatorWidgets.swift; sourceTree = "<group>"; };
@@ -338,6 +340,7 @@
 			isa = PBXGroup;
 			children = (
 				7F53FB1956A0CF0DD034F48F /* AddHabitView.swift */,
+				146D00E454A7F71EFA333FD3 /* HabitLibraryView.swift */,
 				D87BF390FEBE096F13A156FF /* HabitSetupChatView.swift */,
 				C0AA0D4F8CD0AC3BBCCE9750 /* HabitsView.swift */,
 			);
@@ -481,6 +484,7 @@
 				8F3840AABF6939B4C8511B30 /* DashboardView.swift in Sources */,
 				2AC8C2A82D6B922BC7DF2B54 /* DesignSystem.swift in Sources */,
 				FC3B633CE7071929D772A937 /* ExerciseLibrary.swift in Sources */,
+				0A5E0286D427BEF7BAA2E322 /* HabitLibraryView.swift in Sources */,
 				FDDD9F56FD981BD9A8E86BE0 /* HabitModels.swift in Sources */,
 				D5E3B78B686FAC6E25F0AE2E /* HabitSetupChatView.swift in Sources */,
 				A3DC478F53428429D719D4F6 /* HabitStore.swift in Sources */,
@@ -534,7 +538,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = HealthAggregatorWidgets/HealthAggregatorWidgets.entitlements;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				INFOPLIST_FILE = HealthAggregatorWidgets/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -542,7 +546,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.1.1;
+				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ctkrug.healthplus.widgets;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -678,14 +682,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = HealthAggregator/HealthAggregator.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				INFOPLIST_FILE = HealthAggregator/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.1;
+				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ctkrug.healthplus;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
@@ -698,7 +702,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = HealthAggregatorWidgets/HealthAggregatorWidgets.entitlements;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				INFOPLIST_FILE = HealthAggregatorWidgets/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -706,7 +710,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.1.1;
+				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ctkrug.healthplus.widgets;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -719,14 +723,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = HealthAggregator/HealthAggregator.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				INFOPLIST_FILE = HealthAggregator/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.1;
+				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ctkrug.healthplus;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
