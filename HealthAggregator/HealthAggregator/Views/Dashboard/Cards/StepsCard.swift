@@ -3,7 +3,7 @@ import SwiftUI
 struct StepsCard: View {
     let hk: HealthKitService
 
-    private var stepGoal: Double { 10000 }
+    private var stepGoal: Double { hk.stepGoal }
     private var progress: Double { min(hk.steps / stepGoal, 1.0) }
 
     var body: some View {

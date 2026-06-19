@@ -454,7 +454,7 @@ struct NewProgramView: View {
     @State private var description = ""
     @State private var goal: ProgramGoal = .strength
     @State private var workouts: [DraftWorkout] = [DraftWorkout(label: "A"), DraftWorkout(label: "B")]
-    @State private var editingWorkoutIndex: Int? = nil
+    @State private var editingWorkoutID: UUID? = nil
     @State private var showExercisePicker = false
 
     private var store: WorkoutStore { appState.workoutStore }
@@ -516,14 +516,16 @@ struct NewProgramView: View {
                             }
                             .padding(.horizontal, 16)
 
-                            ForEach(workouts.indices, id: \.self) { idx in
+                            ForEach($workouts) { $workout in
                                 DraftWorkoutCard(
-                                    workout: $workouts[idx],
+                                    workout: $workout,
                                     onAddExercise: {
-                                        editingWorkoutIndex = idx
+                                        editingWorkoutID = workout.id
                                         showExercisePicker = true
                                     },
-                                    onDelete: workouts.count > 1 ? { workouts.remove(at: idx) } : nil
+                                    onDelete: workouts.count > 1 ? {
+                                        workouts.removeAll { $0.id == workout.id }
+                                    } : nil
                                 )
                                 .padding(.horizontal, 16)
                             }
@@ -549,17 +551,16 @@ struct NewProgramView: View {
                 }
             }
             .sheet(isPresented: $showExercisePicker) {
-                if let idx = editingWorkoutIndex {
-                    ExercisePickerView { def in
-                        let pe = ProgramExercise(
-                            exerciseName: def.name,
-                            equipment: def.primaryEquipment.first ?? .barbell,
-                            orderIndex: workouts[idx].exercises.count,
-                            rule: def.defaultRule,
-                            isSwim: def.isSwim
-                        )
-                        workouts[idx].exercises.append(pe)
-                    }
+                ExercisePickerView { def in
+                    guard let idx = workouts.firstIndex(where: { $0.id == editingWorkoutID }) else { return }
+                    let pe = ProgramExercise(
+                        exerciseName: def.name,
+                        equipment: def.primaryEquipment.first ?? .barbell,
+                        orderIndex: workouts[idx].exercises.count,
+                        rule: def.defaultRule,
+                        isSwim: def.isSwim
+                    )
+                    workouts[idx].exercises.append(pe)
                 }
             }
         }
@@ -588,7 +589,8 @@ struct NewProgramView: View {
 
 // MARK: - Draft models (local to builder, not persisted)
 
-struct DraftWorkout {
+struct DraftWorkout: Identifiable {
+    var id = UUID()
     var label: String
     var name: String = ""
     var exercises: [ProgramExercise] = []
@@ -631,9 +633,9 @@ struct DraftWorkoutCard: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 8)
             } else {
-                ForEach(workout.exercises.indices, id: \.self) { i in
-                    ProgramExerciseRow(exercise: $workout.exercises[i]) {
-                        workout.exercises.remove(at: i)
+                ForEach($workout.exercises) { $exercise in
+                    ProgramExerciseRow(exercise: $exercise) {
+                        workout.exercises.removeAll { $0.id == exercise.id }
                     }
                 }
             }
