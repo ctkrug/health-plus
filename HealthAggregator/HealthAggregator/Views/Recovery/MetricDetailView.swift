@@ -144,53 +144,19 @@ struct MetricDetailView: View {
             .frame(height: 200)
             .frame(maxWidth: .infinity)
         } else {
-            VStack(alignment: .leading, spacing: 0) {
-                Chart(displayed, id: \.0) { pt in
-                    LineMark(x: .value("Date", pt.0), y: .value(unit, pt.1))
-                        .foregroundStyle(color)
-                        .interpolationMethod(.catmullRom)
-                    AreaMark(x: .value("Date", pt.0), y: .value(unit, pt.1))
-                        .foregroundStyle(
-                            LinearGradient(colors: [color.opacity(0.25), color.opacity(0.0)],
-                                           startPoint: .top, endPoint: .bottom)
-                        )
-                        .interpolationMethod(.catmullRom)
-                    if let s = chartStats {
-                        RuleMark(y: .value("Avg", s.avg))
-                            .lineStyle(StrokeStyle(lineWidth: 1, dash: [5]))
-                            .foregroundStyle(Color.textTertiary)
-                            .annotation(position: .trailing) {
-                                Text("avg")
-                                    .font(.system(size: 10))
-                                    .foregroundStyle(Color.textTertiary)
-                            }
-                    }
-                }
-                .chartXAxis {
-                    AxisMarks(values: .automatic(desiredCount: period == .week ? 7 : 5)) { val in
-                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
-                            .foregroundStyle(Color.cardBorder)
-                        AxisValueLabel {
-                            if let d = val.as(Date.self) {
-                                Text(period == .week
-                                     ? d.formatted(.dateTime.weekday(.abbreviated))
-                                     : d.formatted(.dateTime.month(.abbreviated).day()))
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(Color.textSecondary)
-                            }
-                        }
-                    }
-                }
-                .chartYAxis {
-                    AxisMarks { _ in
-                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
-                            .foregroundStyle(Color.cardBorder)
-                        AxisValueLabel()
-                            .foregroundStyle(Color.textSecondary)
-                            .font(.system(size: 11))
-                    }
-                }
-                .frame(height: 220)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Touch and drag to scrub")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Color.textTertiary)
+                InteractiveTrendChart(
+                    points: displayed,
+                    color: color,
+                    unit: unit,
+                    valueFormat: formatValue,
+                    weekdayLabels: period == .week,
+                    yDomainPadding: yPadding,
+                    height: 220
+                )
             }
             .padding(16)
             .background(Color.cardBackground)
@@ -199,6 +165,12 @@ struct MetricDetailView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
         }
+    }
+
+    /// Pad the y-axis a little so the line isn't flush against the edges.
+    private var yPadding: Double {
+        guard let s = chartStats, s.max > s.min else { return 1 }
+        return (s.max - s.min) * 0.15
     }
 
     private func statsRow(_ s: (avg: Double, min: Double, max: Double)) -> some View {

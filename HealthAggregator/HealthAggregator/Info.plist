@@ -60,8 +60,6 @@
     <true/>
     <key>NSSupportsLiveActivitiesFrequentUpdates</key>
     <true/>
-    <key>UIUserInterfaceStyle</key>
-    <string>Dark</string>
     <key>NSAppTransportSecurity</key>
     <dict>
         <key>NSAllowsArbitraryLoads</key>

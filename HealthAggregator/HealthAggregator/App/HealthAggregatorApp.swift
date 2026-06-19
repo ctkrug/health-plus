@@ -6,6 +6,7 @@ import UserNotifications
 @main
 struct HealthAggregatorApp: App {
     @State private var appState = AppState()
+    @AppStorage("appearanceMode") private var appearanceMode = AppAppearance.system.rawValue
 
     init() {
         registerBackgroundTasks()
@@ -15,7 +16,7 @@ struct HealthAggregatorApp: App {
         WindowGroup {
             RootView()
                 .environment(appState)
-                .preferredColorScheme(.dark)
+                .preferredColorScheme(AppAppearance(rawValue: appearanceMode)?.colorScheme)
                 .onOpenURL { url in
                     handleURL(url)
                 }

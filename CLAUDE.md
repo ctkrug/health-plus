@@ -166,6 +166,43 @@ SourceKit "cannot find type X in scope" diagnostics during single-file edits are
 
 ---
 
+## Automated regression tests
+
+There is a real XCTest suite (`HealthAggregatorTests/`, a unit-test target hosted in the app).
+Run it before any release and whenever you touch logic:
+
+```bash
+./scripts/test.sh                # auto-picks the newest available iPhone simulator
+./scripts/test.sh "iPhone 17"    # or pin a simulator by name
+```
+
+It regenerates the project, boots a simulator, and runs every test. Non-zero exit on any failure
+(so it can gate a release). Results land in `HealthAggregator/build/TestResults.xcresult`.
+
+**What's covered** (think of these as the "don't regress" contract):
+- `ProgressionEngineTests` — every progression strategy (double/linear/repRange/RPE), first-time,
+  session population, Epley 1RM.
+- `InsightsEngineTests` — all science thresholds (body fat by sex, FFMI, VO₂max FRIEND norms, steps,
+  sleep, cardio, protein, recovery guidance bands). **If a number changes, update `docs/SCIENCE.md`.**
+- `WhoopDecodingTests` — WHOOP JSON decoding incl. the **calibration null-score** regression
+  (null recovery fields must decode to nil, not throw).
+- `HabitStoreTests` — toggle/complete, streaks (gaps, missing-today anchor), milestones (first-time
+  fires once), all-time counts, CRUD, dayKey format.
+- `ModelCodableTests` — round-trips every persisted model (Habit, WorkoutSession, TrainingProgram,
+  WhoopSnapshot, …); a broken Codable would silently drop user data.
+- `HabitLibraryTests` — preset integrity (valid hex/icon), category metadata, `libraryOrder` covers
+  every non-custom category, milestone copy exists for every count.
+- `WorkoutStoreTests` — seed invariants (exactly one active program), PR detection, program cycling.
+- `AppConfigTests` — validates the **built** Info.plist (display name, bundle ID, WHOOP keys, URL
+  scheme, BG task IDs, that `$(ANTHROPIC_API_KEY)` was actually substituted) + an `AppState` boot
+  smoke test. Hosted in the app so `Bundle.main` is the real app bundle.
+
+To add coverage: drop a new `*Tests.swift` in `HealthAggregatorTests/` and re-run (xcodegen picks it
+up automatically — no project edits needed). Tests use `@testable import HealthAggregator`; pure
+logic lives in engines/stores specifically so it's testable without the UI.
+
+---
+
 ## Personalized insights engine (science-backed coaching)
 
 The app gives trainer-style, personalized targets and recommendations. Everything is centralized and
