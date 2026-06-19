@@ -9,11 +9,16 @@ GitHub: https://github.com/ctkrug/health-plus
 
 ## ⚡️ Releasing (read this first)
 
-**After any substantial edit, ship with one command from the repo root:**
+**POLICY: after any major update, ship it to TestFlight — don't just push to GitHub.**
+Run the release script, which pushes to GitHub *and* uploads to TestFlight in one shot:
 
 ```bash
 ./scripts/release.sh "short description of what changed"
 ```
+
+(One-time prerequisite: `./scripts/setup-asc.sh` to store the App Store Connect API key.
+Until that's done, release.sh still builds + pushes + produces an .ipa, but the final upload
+must be finished manually in Transporter/Xcode Organizer.)
 
 This runs the full pipeline:
 1. **Preflight** — type-checks both targets + regenerates the Xcode project (aborts on any error).
