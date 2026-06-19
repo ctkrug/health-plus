@@ -24,7 +24,7 @@ targets:
           - "**/*.md"
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.ctkrug.healthplus
+        PRODUCT_BUNDLE_IDENTIFIER: com.charliekrug.healthplus
         INFOPLIST_FILE: HealthAggregator/Info.plist
         CODE_SIGN_ENTITLEMENTS: HealthAggregator/HealthAggregator.entitlements
         MARKETING_VERSION: "1.0"
@@ -37,7 +37,7 @@ targets:
       com.apple.developer.applesignin: enabled
       com.apple.developer.usernotifications.time-sensitive: enabled
       com.apple.security.application-groups:
-        - group.com.ctkrug.healthplus
+        - group.com.charliekrug.healthplus
     dependencies:
       - target: HealthAggregatorWidgets
 
@@ -49,7 +49,7 @@ targets:
       - path: HealthAggregatorWidgets
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.ctkrug.healthplus.widgets
+        PRODUCT_BUNDLE_IDENTIFIER: com.charliekrug.healthplus.widgets
         INFOPLIST_FILE: HealthAggregatorWidgets/Info.plist
         CODE_SIGN_ENTITLEMENTS: HealthAggregatorWidgets/HealthAggregatorWidgets.entitlements
         MARKETING_VERSION: "1.0"
@@ -58,4 +58,4 @@ targets:
         ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME: AccentColor
     capabilities:
       com.apple.security.application-groups:
-        - group.com.ctkrug.healthplus
+        - group.com.charliekrug.healthplus

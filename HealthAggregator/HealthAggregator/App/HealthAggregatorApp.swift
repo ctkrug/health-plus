@@ -24,7 +24,7 @@ struct HealthAggregatorApp: App {
 
     private func registerBackgroundTasks() {
         BGTaskScheduler.shared.register(
-            forTaskWithIdentifier: "com.ctkrug.healthplus.whoopRefresh",
+            forTaskWithIdentifier: "com.charliekrug.healthplus.whoopRefresh",
             using: nil
         ) { task in
             guard let refreshTask = task as? BGAppRefreshTask else {
@@ -33,7 +33,7 @@ struct HealthAggregatorApp: App {
             handleWhoopRefresh(task: refreshTask)
         }
         BGTaskScheduler.shared.register(
-            forTaskWithIdentifier: "com.ctkrug.healthplus.healthkitSync",
+            forTaskWithIdentifier: "com.charliekrug.healthplus.healthkitSync",
             using: nil
         ) { task in
             guard let processingTask = task as? BGProcessingTask else {
@@ -71,7 +71,7 @@ struct HealthAggregatorApp: App {
     }
 
     private func scheduleWhoopRefresh() {
-        let request = BGAppRefreshTaskRequest(identifier: "com.ctkrug.healthplus.whoopRefresh")
+        let request = BGAppRefreshTaskRequest(identifier: "com.charliekrug.healthplus.whoopRefresh")
         request.earliestBeginDate = Date(timeIntervalSinceNow: 30 * 60)
         try? BGTaskScheduler.shared.submit(request)
     }
