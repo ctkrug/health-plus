@@ -75,9 +75,13 @@ same data in the web UI.
 ### ⚠️ HealthKit crash gotcha (learned the hard way)
 HealthKit raises **Objective-C exceptions** that Swift `try/catch` CANNOT catch — they crash the app.
 The usual causes, all of which must be prevented *by construction*:
-- **Wrong unit in `doubleValue(for:)`** — e.g. `HKUnit(from: "ml/kg*min")` parses to `ml·min/kg`, which
-  is incompatible with VO₂max's real unit `ml/(kg·min)`. Always build compound units explicitly with
-  `unitDivided(by:)`/`unitMultiplied(by:)`.
+- **`HKUnit(from:)` with compound strings throws on iOS 26** — any multi-part unit string
+  (`"ml/kg/min"`, `"ml/kg*min"`, etc.) raises an uncatchable ObjC exception in iOS 26's unit parser.
+  **Never use `HKUnit(from:)` for compound units.** Build them via API only:
+  `HKUnit.literUnit(with: .milli).unitDivided(by: HKUnit.gramUnit(with: .kilo).unitMultiplied(by: .minute()))`.
+- **Wrong unit in `doubleValue(for:)`** — incompatible unit also raises an uncatchable ObjC exception.
+  Always guard with `quantity.is(compatibleWith: unit)` before calling `doubleValue`. The shared
+  helpers `fetchQuantityMostRecent` / `fetchQuantitySum` already do this — never call `doubleValue` raw.
 - **`HKStatisticsQuery` with `.cumulativeSum` on a non-cumulative type** (heart rate, body mass, etc.).
   Use `fetchQuantitySum` only for cumulative types; `fetchQuantityMostRecent` (HKSampleQuery) for the rest.
 - Mutating `@Observable` service state off the main thread — assign on `MainActor`.
