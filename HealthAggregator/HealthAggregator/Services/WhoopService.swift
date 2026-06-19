@@ -133,10 +133,8 @@ final class WhoopService {
 
     func refresh() async {
         guard isConnected else { return }
-        isLoading = true
-        defer { isLoading = false }
+        await MainActor.run { isLoading = true }
         do {
-            // Refresh 60s early to avoid mid-request expiry
             if let expiry = tokenExpiry, expiry < Date().addingTimeInterval(60) { try await refreshAccessToken() }
             async let recovery = fetchLatestRecovery()
             async let cycle = fetchLatestCycle()
@@ -149,10 +147,12 @@ final class WhoopService {
                 snapshot.strain = cyc?.score?.strain
                 snapshot.sleepPerformance = slp?.score?.sleepPerformancePercentage
                 snapshot.lastUpdated = Date()
+                isLoading = false
                 saveToCache()
             }
         } catch {
             print("WHOOP refresh error: \(error)")
+            await MainActor.run { isLoading = false }
         }
     }
 
