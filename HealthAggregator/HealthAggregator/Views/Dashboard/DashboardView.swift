@@ -59,7 +59,8 @@ struct DashboardView: View {
     private func cardView(for card: DashboardCard) -> some View {
         switch card {
         case .recovery:
-            RecoveryCard(whoop: appState.whoopService.snapshot, hk: appState.healthKitService)
+            RecoveryCard(whoop: appState.whoopService.snapshot, hk: appState.healthKitService,
+                         isConnected: appState.whoopService.isConnected)
         case .activity:
             ActivityRingsCard(hk: appState.healthKitService)
         case .body:

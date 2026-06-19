@@ -4,13 +4,22 @@ struct AddHabitView: View {
     @Environment(AppState.self) var appState
     @Environment(\.dismiss) var dismiss
 
-    var editing: Habit? = nil
+    let editing: Habit?
 
-    @State private var name = ""
-    @State private var category: HabitCategory = .custom
-    @State private var timeSlot: HabitTimeSlot = .anytime
-    @State private var selectedIcon = "checkmark.circle.fill"
-    @State private var selectedColor = "#6366F1"
+    @State private var name: String
+    @State private var category: HabitCategory
+    @State private var timeSlot: HabitTimeSlot
+    @State private var selectedIcon: String
+    @State private var selectedColor: String
+
+    init(editing: Habit? = nil) {
+        self.editing = editing
+        _name         = State(initialValue: editing?.name ?? "")
+        _category     = State(initialValue: editing?.category ?? .custom)
+        _timeSlot     = State(initialValue: editing?.timeSlot ?? .anytime)
+        _selectedIcon = State(initialValue: editing?.icon ?? "checkmark.circle.fill")
+        _selectedColor = State(initialValue: editing?.colorHex ?? "#6366F1")
+    }
 
     private var store: HabitStore { appState.habitStore }
 
@@ -121,17 +130,9 @@ struct AddHabitView: View {
                 }
             }
             .onChange(of: category) { _, cat in
+                // When the user picks a new category, snap icon + color to that category's defaults.
                 selectedIcon = cat.icon
                 selectedColor = cat.colorHex
-            }
-            .onAppear {
-                if let h = editing {
-                    name = h.name
-                    category = h.category
-                    timeSlot = h.timeSlot
-                    selectedIcon = h.icon
-                    selectedColor = h.colorHex
-                }
             }
         }
     }

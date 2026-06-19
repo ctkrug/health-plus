@@ -3,11 +3,13 @@ import SwiftUI
 struct RecoveryCard: View {
     let whoop: WhoopSnapshot
     let hk: HealthKitService
+    var isConnected: Bool = false
 
     private var recoveryValue: Double { whoop.recoveryScore ?? 0 }
     private var hrv: Double { whoop.hrv ?? hk.hrvMssd }
     private var rhr: Double { whoop.restingHR ?? hk.restingHR }
-    private var isWhoopConnected: Bool { whoop.isConnected }
+    // Connected = OAuth linked (service flag). Falls back to snapshot for older call sites.
+    private var isWhoopConnected: Bool { isConnected || whoop.isConnected }
     private var recoveryColor: Color { Color.recoveryColor(for: recoveryValue) }
 
     var body: some View {

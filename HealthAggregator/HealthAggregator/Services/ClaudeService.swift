@@ -51,7 +51,8 @@ final class ClaudeService {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-            throw ClaudeError.apiError
+            let status = (response as? HTTPURLResponse)?.statusCode ?? -1
+            throw ClaudeError.apiError(status: status)
         }
 
         let decoded = try JSONDecoder().decode(ClaudeResponse.self, from: data)
@@ -61,12 +62,14 @@ final class ClaudeService {
 
 enum ClaudeError: Error, LocalizedError {
     case noApiKey
-    case apiError
+    case apiError(status: Int)
 
     var errorDescription: String? {
         switch self {
-        case .noApiKey: return "No Anthropic API key. Add it in Settings."
-        case .apiError: return "Claude API error. Check your key and try again."
+        case .noApiKey:
+            return "AI coach is unavailable right now. Try the Library or add habits manually."
+        case .apiError(let status):
+            return "Couldn't reach the AI coach (error \(status)). Please try again in a moment."
         }
     }
 }

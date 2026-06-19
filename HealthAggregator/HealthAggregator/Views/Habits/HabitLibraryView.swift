@@ -16,14 +16,12 @@ struct HabitLibraryView: View {
     }
 
     private func isAdded(_ preset: PresetHabit) -> Bool {
-        store.habits.contains { $0.name == preset.name }
+        store.habits.contains { $0.name == preset.name && $0.category == preset.category }
     }
 
     private func toggle(_ preset: PresetHabit) {
-        if isAdded(preset) {
-            if let habit = store.habits.first(where: { $0.name == preset.name }) {
-                store.deleteHabit(habit)
-            }
+        if let habit = store.habits.first(where: { $0.name == preset.name && $0.category == preset.category }) {
+            store.deleteHabit(habit)
         } else {
             store.addHabit(preset.toHabit())
             HapticsManager.light()
