@@ -145,11 +145,11 @@ final class HealthKitService {
     }
 
     private func fetchVO2Max() async {
-        // Build the unit explicitly. The string "ml/kg*min" parses to ml·min/kg, which is
-        // INCOMPATIBLE with VO2max's stored unit ml/(kg·min) — and doubleValue(for:) then
-        // raises an uncatchable Obj-C exception. Constructing it removes that crash.
-        let vo2Unit = HKUnit.literUnit(with: .milli)
-            .unitDivided(by: HKUnit.gramUnit(with: .kilo).unitMultiplied(by: .minute()))
+        // "ml/kg/min" (two slashes) correctly parses as mL·kg⁻¹·min⁻¹.
+        // The old string "ml/kg*min" parsed left-to-right as mL·min/kg (wrong), causing an
+        // uncatchable Obj-C exception in doubleValue(for:). fetchQuantityMostRecent also guards
+        // with is(compatibleWith:) as a belt-and-suspenders check.
+        let vo2Unit = HKUnit(from: "ml/kg/min")
         let value = await fetchQuantityMostRecent(
             .vo2Max, unit: vo2Unit,
             start: Calendar.current.date(byAdding: .month, value: -6, to: Date())!, end: Date()
@@ -206,12 +206,12 @@ final class HealthKitService {
                     return
                 }
                 Task { @MainActor in
-                    self.activeCalories = summary.activeEnergyBurned.doubleValue(for: .kilocalorie())
-                    self.exerciseMinutes = summary.appleExerciseTime.doubleValue(for: .minute())
-                    self.standHours = summary.appleStandHours.doubleValue(for: .count())
-                    self.moveGoal = summary.activeEnergyBurnedGoal.doubleValue(for: .kilocalorie())
-                    self.exerciseGoal = summary.appleExerciseTimeGoal.doubleValue(for: .minute())
-                    self.standGoal = summary.appleStandHoursGoal.doubleValue(for: .count())
+                    self.activeCalories = self.safeDouble(summary.activeEnergyBurned, unit: .kilocalorie())
+                    self.exerciseMinutes = self.safeDouble(summary.appleExerciseTime, unit: .minute())
+                    self.standHours = self.safeDouble(summary.appleStandHours, unit: .count())
+                    self.moveGoal = self.safeDouble(summary.activeEnergyBurnedGoal, unit: .kilocalorie())
+                    self.exerciseGoal = self.safeDouble(summary.appleExerciseTimeGoal, unit: .minute())
+                    self.standGoal = self.safeDouble(summary.appleStandHoursGoal, unit: .count())
                     continuation.resume()
                 }
             }
@@ -336,8 +336,10 @@ final class HealthKitService {
         return await withCheckedContinuation { continuation in
             let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sort]) { [weak self] _, samples, _ in
                 guard let self else { continuation.resume(); return }
-                let data = (samples as? [HKQuantitySample] ?? []).map { s in
-                    (s.startDate, s.quantity.doubleValue(for: .gramUnit(with: .kilo)))
+                let unit = HKUnit.gramUnit(with: .kilo)
+                let data = (samples as? [HKQuantitySample] ?? []).compactMap { s -> (Date, Double)? in
+                    guard s.quantity.is(compatibleWith: unit) else { return nil }
+                    return (s.startDate, s.quantity.doubleValue(for: unit))
                 }
                 Task { @MainActor in self.weightHistory = data; continuation.resume() }
             }
@@ -354,8 +356,10 @@ final class HealthKitService {
         return await withCheckedContinuation { continuation in
             let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sort]) { [weak self] _, samples, _ in
                 guard let self else { continuation.resume(); return }
-                let data = (samples as? [HKQuantitySample] ?? []).map { s in
-                    (s.startDate, s.quantity.doubleValue(for: .percent()) * 100)
+                let unit = HKUnit.percent()
+                let data = (samples as? [HKQuantitySample] ?? []).compactMap { s -> (Date, Double)? in
+                    guard s.quantity.is(compatibleWith: unit) else { return nil }
+                    return (s.startDate, s.quantity.doubleValue(for: unit))
                 }
                 Task { @MainActor in self.bodyFatHistory = data; continuation.resume() }
             }
@@ -372,8 +376,10 @@ final class HealthKitService {
         return await withCheckedContinuation { continuation in
             let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sort]) { [weak self] _, samples, _ in
                 guard let self else { continuation.resume(); return }
-                let data = (samples as? [HKQuantitySample] ?? []).map { s in
-                    (s.startDate, s.quantity.doubleValue(for: .secondUnit(with: .milli)))
+                let unit = HKUnit.secondUnit(with: .milli)
+                let data = (samples as? [HKQuantitySample] ?? []).compactMap { s -> (Date, Double)? in
+                    guard s.quantity.is(compatibleWith: unit) else { return nil }
+                    return (s.startDate, s.quantity.doubleValue(for: unit))
                 }
                 Task { @MainActor in self.hrvHistory = data; continuation.resume() }
             }
@@ -441,13 +447,19 @@ final class HealthKitService {
 
     // MARK: - Helpers
 
+    /// Guards against unit-incompatibility ObjC exceptions that Swift try/catch cannot intercept.
+    private func safeDouble(_ quantity: HKQuantity, unit: HKUnit) -> Double {
+        quantity.is(compatibleWith: unit) ? quantity.doubleValue(for: unit) : 0
+    }
+
     private func fetchQuantitySum(_ identifier: HKQuantityTypeIdentifier, unit: HKUnit, start: Date, end: Date) async -> Double {
         guard let type = HKQuantityType.quantityType(forIdentifier: identifier) else { return 0 }
         let predicate = HKQuery.predicateForSamples(withStart: start, end: end)
 
         return await withCheckedContinuation { continuation in
-            let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, stats, _ in
-                continuation.resume(returning: stats?.sumQuantity()?.doubleValue(for: unit) ?? 0)
+            let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { [self] _, stats, _ in
+                guard let sum = stats?.sumQuantity() else { continuation.resume(returning: 0); return }
+                continuation.resume(returning: self.safeDouble(sum, unit: unit))
             }
             store.execute(query)
         }
@@ -459,9 +471,11 @@ final class HealthKitService {
         let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
 
         return await withCheckedContinuation { continuation in
-            let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: 1, sortDescriptors: [sort]) { _, samples, _ in
-                let sample = (samples as? [HKQuantitySample])?.first
-                continuation.resume(returning: sample?.quantity.doubleValue(for: unit) ?? 0)
+            let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: 1, sortDescriptors: [sort]) { [self] _, samples, _ in
+                guard let q = (samples as? [HKQuantitySample])?.first?.quantity else {
+                    continuation.resume(returning: 0); return
+                }
+                continuation.resume(returning: self.safeDouble(q, unit: unit))
             }
             store.execute(query)
         }
