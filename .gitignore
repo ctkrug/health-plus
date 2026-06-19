@@ -17,3 +17,6 @@ scripts/.env
 
 # API keys — injected at build time via xcconfig
 HealthAggregator/Secrets.xcconfig
+
+# Serena MCP cache/memories
+.serena/
