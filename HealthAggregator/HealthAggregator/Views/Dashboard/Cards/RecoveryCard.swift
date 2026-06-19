@@ -18,9 +18,10 @@ struct RecoveryCard: View {
                     .foregroundStyle(Color.textSecondary)
                 Spacer()
                 if isWhoopConnected {
-                    Image("whoop_logo")
-                        .resizable().scaledToFit().frame(height: 14)
-                        .opacity(0.6)
+                    Text("WHOOP")
+                        .font(.system(size: 10, weight: .black, design: .rounded))
+                        .foregroundStyle(Color.textTertiary)
+                        .tracking(1)
                 } else {
                     Text("WHOOP not connected")
                         .font(.system(size: 11))

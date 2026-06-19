@@ -9,68 +9,61 @@ struct OnboardingView: View {
         ZStack {
             Color.appBackground.ignoresSafeArea()
 
-            TabView(selection: $page) {
-                // Page 0 — Welcome
-                OnboardingPage(
-                    icon: "waveform.path.ecg.rectangle.fill",
-                    iconColor: .accentGreen,
-                    title: "All Your Health Data",
-                    subtitle: "Apple Health, WHOOP, Renpho, MyFitnessPal, and Swim.com — unified in one beautiful dashboard.",
-                    buttonLabel: "Get Started",
-                    action: { withAnimation { page = 1 } }
-                ).tag(0)
-
-                // Page 1 — Sign in
-                OnboardingSignInPage(
-                    onSignedIn: { withAnimation { page = 2 } }
-                ).tag(1)
-
-                // Page 2 — Health access
-                OnboardingPage(
-                    icon: "heart.fill",
-                    iconColor: .accentRed,
-                    title: "Grant Health Access",
-                    subtitle: "Health+ reads your steps, sleep, heart rate, nutrition, body composition, and workouts from Apple Health.",
-                    buttonLabel: "Allow Health Access",
-                    action: {
-                        Task {
-                            await appState.healthKitService.requestAuthorization()
-                            withAnimation { page = 3 }
+            // Manual page container — buttons drive navigation, no swipe to block.
+            ZStack {
+                switch page {
+                case 0:
+                    OnboardingPage(
+                        icon: "waveform.path.ecg.rectangle.fill",
+                        iconColor: .accentGreen,
+                        title: "All Your Health Data",
+                        subtitle: "Apple Health, WHOOP, Renpho, MyFitnessPal, and Swim.com — unified in one beautiful dashboard.",
+                        buttonLabel: "Get Started",
+                        action: { withAnimation { page = 1 } }
+                    )
+                    .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)).combined(with: .opacity))
+                case 1:
+                    OnboardingSignInPage(
+                        onSignedIn: { withAnimation { page = 2 } }
+                    )
+                    .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)).combined(with: .opacity))
+                case 2:
+                    OnboardingPage(
+                        icon: "heart.fill",
+                        iconColor: .accentRed,
+                        title: "Grant Health Access",
+                        subtitle: "Health+ reads your steps, sleep, heart rate, nutrition, body composition, and workouts from Apple Health.",
+                        buttonLabel: "Allow Health Access",
+                        action: {
+                            Task {
+                                await appState.healthKitService.requestAuthorization()
+                                await MainActor.run { withAnimation { page = 3 } }
+                            }
                         }
-                    }
-                ).tag(2)
-
-                // Page 3 — Notifications
-                OnboardingPage(
-                    icon: "bell.badge.fill",
-                    iconColor: .accentBlue,
-                    title: "Stay Informed",
-                    subtitle: "Get daily summaries, PR alerts, rest timer notifications, and your weekly recap.",
-                    buttonLabel: "Enable Notifications",
-                    action: {
-                        Task {
-                            await appState.notificationService.requestAuthorization()
-                            withAnimation { page = 4 }
+                    )
+                    .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)).combined(with: .opacity))
+                case 3:
+                    OnboardingPage(
+                        icon: "bell.badge.fill",
+                        iconColor: .accentBlue,
+                        title: "Stay Informed",
+                        subtitle: "Get daily summaries, PR alerts, rest timer notifications, and your weekly recap.",
+                        buttonLabel: "Enable Notifications",
+                        action: {
+                            Task {
+                                await appState.notificationService.requestAuthorization()
+                                await MainActor.run { withAnimation { page = 4 } }
+                            }
                         }
+                    )
+                    .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)).combined(with: .opacity))
+                default:
+                    OnboardingFinalPage {
+                        appState.isOnboardingComplete = true
                     }
-                ).tag(3)
-
-                // Page 4 — WHOOP / finish
-                OnboardingFinalPage {
-                    appState.isOnboardingComplete = true
-                }.tag(4)
+                    .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)).combined(with: .opacity))
+                }
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            // Disable swipe — must use buttons to advance (prevents permission-skip)
-            .allowsHitTesting(true)
-            .animation(.easeInOut, value: page)
-            .disabled(false)
-            // Overlay to block swipe gestures while still allowing button taps
-            .overlay(
-                Color.clear
-                    .contentShape(Rectangle())
-                    .gesture(DragGesture())   // absorbs horizontal swipes
-            )
 
             // Page dots
             VStack {

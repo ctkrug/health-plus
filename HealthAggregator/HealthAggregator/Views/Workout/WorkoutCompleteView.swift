@@ -209,7 +209,8 @@ struct ConfettiView: View {
                     let yBase = (time * 120 + seed * 11.7).truncatingRemainder(dividingBy: size.height + 20)
                     let y = yBase - 20
                     let color = colors[i % colors.count]
-                    let size = CGFloat.random(in: 5...10)
+                    // Deterministic per-particle size so it doesn't flicker each frame
+                    let size = 5 + (seed.truncatingRemainder(dividingBy: 5))
                     let rect = CGRect(x: x - size/2, y: y, width: size, height: size * 0.6)
                     context.fill(Path(ellipseIn: rect), with: .color(color.opacity(0.85)))
                 }

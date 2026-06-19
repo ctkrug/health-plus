@@ -9,8 +9,10 @@ struct SettingsView: View {
     // workoutReminderMinute @State is synced from/to storedReminderMinute
     @State private var calorieGoal = "2500"
     @State private var proteinGoal = "180"
+    @State private var stepGoal = "10000"
     @State private var showWhoopConnect = false
     @AppStorage("calorieGoal") private var storedCalorieGoal = 2500.0
+    @AppStorage("stepGoal") private var storedStepGoal = 10000.0
     @AppStorage("weightUnit") private var storedWeightUnit = "lbs"
     @AppStorage("proteinGoalGrams") private var storedProteinGoal = 180.0
     @AppStorage("workoutReminderEnabled") private var storedReminderEnabled = false
@@ -63,8 +65,23 @@ struct SettingsView: View {
                         )
                     }
 
-                    // Nutrition goals
-                    Section("Nutrition Goals") {
+                    // Daily goals
+                    Section("Daily Goals") {
+                        HStack {
+                            Text("Step Goal")
+                                .foregroundStyle(Color.textPrimary)
+                            Spacer()
+                            TextField("steps", text: $stepGoal)
+                                .keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing)
+                                .foregroundStyle(Color.accentBlue)
+                                .frame(width: 80)
+                                .onChange(of: stepGoal) { _, v in
+                                    if let d = Double(v) { storedStepGoal = d }
+                                }
+                        }
+                        .listRowBackground(Color.cardBackground)
+
                         HStack {
                             Text("Calorie Goal")
                                 .foregroundStyle(Color.textPrimary)
@@ -221,6 +238,7 @@ struct SettingsView: View {
             .onAppear {
                 calorieGoal = "\(Int(storedCalorieGoal))"
                 proteinGoal = "\(Int(storedProteinGoal))"
+                stepGoal = "\(Int(storedStepGoal))"
                 workoutReminderEnabled = storedReminderEnabled
                 workoutReminderHour = storedReminderHour
                 workoutReminderMinute = storedReminderMinute

@@ -8,6 +8,7 @@ final class HealthKitService {
 
     // Cached values
     var steps: Double = 0
+    var stepGoal: Double = 10000
     var activeCalories: Double = 0
     var restingCalories: Double = 0
     var exerciseMinutes: Double = 0
@@ -85,19 +86,39 @@ final class HealthKitService {
 
     func refresh() async {
         isLoading = true
+        // Pull user goals from Settings so cards reflect what the user configured
+        loadGoalsFromSettings()
         await withTaskGroup(of: Void.self) { group in
             group.addTask { await self.fetchSteps() }
             group.addTask { await self.fetchActivityRings() }
+            group.addTask { await self.fetchRestingCalories() }
             group.addTask { await self.fetchHeartMetrics() }
             group.addTask { await self.fetchBodyComposition() }
             group.addTask { await self.fetchNutrition() }
             group.addTask { await self.fetchSleep() }
             group.addTask { await self.fetchStepsHistory() }
             group.addTask { await self.fetchWeightHistory() }
+            group.addTask { await self.fetchBodyFatHistory() }
             group.addTask { await self.fetchHRVHistory() }
         }
         isLoading = false
         writeWidgetData()
+    }
+
+    private func loadGoalsFromSettings() {
+        let defaults = UserDefaults.standard
+        let storedCal = defaults.double(forKey: "calorieGoal")
+        if storedCal > 0 { calorieGoal = storedCal }
+        let storedSteps = defaults.double(forKey: "stepGoal")
+        if storedSteps > 0 { stepGoal = storedSteps }
+    }
+
+    private func fetchRestingCalories() async {
+        let value = await fetchQuantitySum(
+            .basalEnergyBurned, unit: .kilocalorie(),
+            start: Calendar.current.startOfDay(for: Date()), end: Date()
+        )
+        await MainActor.run { restingCalories = value }
     }
 
     func performBackgroundSync() async {
@@ -265,6 +286,24 @@ final class HealthKitService {
         }
     }
 
+    private func fetchBodyFatHistory() async {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .bodyFatPercentage) else { return }
+        let start = Calendar.current.date(byAdding: .day, value: -365, to: Date())!
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: Date())
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sort]) { [weak self] _, samples, _ in
+                guard let self else { continuation.resume(); return }
+                let data = (samples as? [HKQuantitySample] ?? []).map { s in
+                    (s.startDate, s.quantity.doubleValue(for: .percent()) * 100)
+                }
+                Task { @MainActor in self.bodyFatHistory = data; continuation.resume() }
+            }
+            store.execute(query)
+        }
+    }
+
     private func fetchHRVHistory() async {
         guard let type = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN) else { return }
         let start = Calendar.current.date(byAdding: .day, value: -30, to: Date())!
@@ -337,7 +376,7 @@ final class HealthKitService {
     private func writeWidgetData() {
         let defaults = UserDefaults(suiteName: "group.com.ctkrug.healthplus")
         defaults?.set(Int(steps), forKey: "widget_steps")
-        defaults?.set(10000, forKey: "widget_stepGoal")
+        defaults?.set(Int(stepGoal), forKey: "widget_stepGoal")
         WidgetCenter.shared.reloadAllTimelines()
     }
 
