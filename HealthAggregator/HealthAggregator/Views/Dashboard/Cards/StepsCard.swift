@@ -35,9 +35,11 @@ struct StepsCard: View {
                     }
                     .frame(height: 6)
 
-                    Text("\(Int((stepGoal - hk.steps).magnitude).formatted()) to goal")
+                    Text(hk.steps >= stepGoal
+                         ? "Goal reached! 🎉"
+                         : "\(Int(stepGoal - hk.steps).formatted()) to goal")
                         .font(.metricLabel(11))
-                        .foregroundStyle(Color.textTertiary)
+                        .foregroundStyle(hk.steps >= stepGoal ? Color.accentGreen : Color.textTertiary)
                 }
 
                 VStack(alignment: .trailing, spacing: 8) {

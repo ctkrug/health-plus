@@ -142,6 +142,7 @@ struct BodyCompositionView: View {
                     }
                     .padding(.top, 8)
                 }
+                .refreshable { await hk.refresh() }
             }
             .navigationTitle("Body")
             .navigationBarTitleDisplayMode(.large)
