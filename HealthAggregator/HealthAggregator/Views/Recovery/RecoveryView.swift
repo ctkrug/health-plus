@@ -67,6 +67,14 @@ struct RecoveryView: View {
         }
         .padding(.horizontal, 16)
 
+        // Personalized training guidance from recovery state (see docs/SCIENCE.md §10)
+        if let guidance = InsightsEngine.recoveryGuidance(
+            UserMetrics.build(hk: hk, whoop: whoop, store: appState.workoutStore)
+        ) {
+            RecoveryGuidanceCard(guidance: guidance)
+                .padding(.horizontal, 16)
+        }
+
         // Metrics grid
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
             RecoveryMetricCard(
