@@ -1,20 +1,30 @@
 import SwiftUI
+import UIKit
 
 // MARK: - Colors
+//
+// Soothing, accessible palette that adapts to light & dark mode automatically. Every semantic token
+// is an adaptive color (a UIColor dynamic provider) that resolves to a calm, desaturated tone in
+// each appearance. Accents are intentionally muted — no neon — for an easy-on-the-eyes feel.
 extension Color {
-    static let appBackground    = Color(hex: "#0A0A0F")
-    static let cardBackground   = Color(hex: "#141420")
-    static let cardBorder       = Color(hex: "#1E1E2E")
-    static let accentBlue       = Color(hex: "#4A9EFF")
-    static let accentGreen      = Color(hex: "#30D158")
-    static let accentYellow     = Color(hex: "#FFD60A")
-    static let accentRed        = Color(hex: "#FF453A")
-    static let accentPurple     = Color(hex: "#BF5AF2")
-    static let accentOrange     = Color(hex: "#FF9F0A")
-    static let textPrimary      = Color.white
-    static let textSecondary    = Color(hex: "#8E8E9E")
-    static let textTertiary     = Color(hex: "#48485A")
-    static let separatorColor   = Color(hex: "#1C1C2A")
+    // Surfaces
+    static let appBackground    = Color(light: "#F4F6FA", dark: "#0F1115")
+    static let cardBackground   = Color(light: "#FFFFFF", dark: "#181B22")
+    static let cardBorder       = Color(light: "#E5E8EE", dark: "#272B33")
+    static let separatorColor   = Color(light: "#E9ECF1", dark: "#20242B")
+
+    // Text
+    static let textPrimary      = Color(light: "#1B1E24", dark: "#ECEEF1")
+    static let textSecondary    = Color(light: "#5E6470", dark: "#9AA1AC")
+    static let textTertiary     = Color(light: "#9AA0AB", dark: "#5B616C")
+
+    // Accents (muted — deeper in light mode for contrast, softer in dark)
+    static let accentBlue       = Color(light: "#3C6CB4", dark: "#6E9BD8")
+    static let accentGreen      = Color(light: "#2F8F57", dark: "#6FC58C")
+    static let accentYellow     = Color(light: "#B8893A", dark: "#E6C46E")
+    static let accentRed        = Color(light: "#C2554F", dark: "#E08B86")
+    static let accentPurple     = Color(light: "#7E63B8", dark: "#A98FD8")
+    static let accentOrange     = Color(light: "#C57A38", dark: "#E0A36A")
 
     static func recoveryColor(for value: Double) -> Color {
         switch value {
@@ -22,6 +32,13 @@ extension Color {
         case 34..<67: return .accentYellow
         default: return .accentRed
         }
+    }
+
+    /// Adaptive color from two hex strings — resolves per the active light/dark appearance.
+    init(light: String, dark: String) {
+        self = Color(uiColor: UIColor { trait in
+            trait.userInterfaceStyle == .dark ? UIColor(hex: dark) : UIColor(hex: light)
+        })
     }
 
     init(hex: String) {
@@ -32,6 +49,50 @@ extension Color {
         let g = Double((rgbValue & 0x00FF00) >> 8) / 255
         let b = Double(rgbValue & 0x0000FF) / 255
         self.init(red: r, green: g, blue: b)
+    }
+}
+
+extension UIColor {
+    convenience init(hex: String) {
+        let scanner = Scanner(string: hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted))
+        var rgb: UInt64 = 0
+        scanner.scanHexInt64(&rgb)
+        self.init(
+            red: CGFloat((rgb & 0xFF0000) >> 16) / 255,
+            green: CGFloat((rgb & 0x00FF00) >> 8) / 255,
+            blue: CGFloat(rgb & 0x0000FF) / 255,
+            alpha: 1
+        )
+    }
+}
+
+// MARK: - Appearance setting
+enum AppAppearance: String, CaseIterable, Identifiable {
+    case system, light, dark
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .system: return "System"
+        case .light:  return "Light"
+        case .dark:   return "Dark"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .system: return "circle.lefthalf.filled"
+        case .light:  return "sun.max.fill"
+        case .dark:   return "moon.fill"
+        }
+    }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light:  return .light
+        case .dark:   return .dark
+        }
     }
 }
 

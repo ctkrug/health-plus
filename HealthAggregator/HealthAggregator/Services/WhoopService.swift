@@ -17,8 +17,15 @@ final class WhoopService {
         return Date(timeIntervalSince1970: t)
     }
 
-    private let baseURL = "https://api.prod.whoop.com/developer/v1"
+    // v2: the WHOOP v1 API was removed after 2025-10-01. v1 endpoints now 404/410.
+    private let baseURL = "https://api.prod.whoop.com/developer/v2"
     private let authBaseURL = "https://api.prod.whoop.com/oauth/oauth2"
+
+    private static let jsonDecoder: JSONDecoder = {
+        let d = JSONDecoder()
+        d.dateDecodingStrategy = .iso8601
+        return d
+    }()
 
     // Strong references prevent deallocation during the OAuth flow
     // presentationContextProvider is weak, so we must hold our own strong ref to AnchorProvider
@@ -100,9 +107,7 @@ final class WhoopService {
         request.httpBody = body.data(using: .utf8)
 
         let (data, _) = try await URLSession.shared.data(for: request)
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        let tokens = try decoder.decode(WhoopTokenResponse.self, from: data)
+        let tokens = try Self.jsonDecoder.decode(WhoopTokenResponse.self, from: data)
         storeTokens(tokens)
     }
 
@@ -120,9 +125,7 @@ final class WhoopService {
             await MainActor.run { disconnect() }
             throw WhoopError.notAuthenticated
         }
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        let tokens = try decoder.decode(WhoopTokenResponse.self, from: data)
+        let tokens = try Self.jsonDecoder.decode(WhoopTokenResponse.self, from: data)
         storeTokens(tokens)
     }
 
@@ -205,15 +208,25 @@ final class WhoopService {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 401 {
-            guard !retried else { throw WhoopError.notAuthenticated }   // prevent infinite recursion
-            try await refreshAccessToken()
-            return try await get(path: path, retried: true)
+        if let httpResponse = response as? HTTPURLResponse {
+            if httpResponse.statusCode == 401 {
+                guard !retried else { throw WhoopError.notAuthenticated }   // prevent infinite recursion
+                try await refreshAccessToken()
+                return try await get(path: path, retried: true)
+            }
+            if httpResponse.statusCode >= 400 {
+                let body = String(data: data, encoding: .utf8) ?? ""
+                print("WHOOP API \(httpResponse.statusCode) for \(path): \(body)")
+                throw WhoopError.apiError("HTTP \(httpResponse.statusCode)")
+            }
         }
 
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return try decoder.decode(T.self, from: data)
+        do {
+            return try Self.jsonDecoder.decode(T.self, from: data)
+        } catch {
+            print("WHOOP decode error for \(path): \(error)")
+            throw error
+        }
     }
 
     private func iso8601Yesterday() -> String {

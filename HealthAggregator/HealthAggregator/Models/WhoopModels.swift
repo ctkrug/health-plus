@@ -17,18 +17,20 @@ struct WhoopTokenResponse: Codable {
 }
 
 struct WhoopRecovery: Codable, Identifiable {
-    let id: Int
-    let cycleId: Int
-    let sleepId: Int
-    let userId: Int
-    let createdAt: Date
-    let updatedAt: Date
+    // v2: sleep_id is a UUID string (was Int in v1). Only `score` is consumed by the app,
+    // so every other field is optional/tolerant — a field type change must not nuke the decode.
+    let cycleId: Int?
+    let sleepId: String?
+    let userId: Int?
     let score: WhoopRecoveryScore?
 
+    var id: String { sleepId ?? "\(cycleId ?? 0)" }
+
     enum CodingKeys: String, CodingKey {
-        case id, sleepId = "sleep_id", cycleId = "cycle_id",
-             userId = "user_id", createdAt = "created_at",
-             updatedAt = "updated_at", score
+        case cycleId = "cycle_id"
+        case sleepId = "sleep_id"
+        case userId = "user_id"
+        case score
     }
 }
 
@@ -51,18 +53,12 @@ struct WhoopRecoveryScore: Codable {
 }
 
 struct WhoopSleep: Codable, Identifiable {
-    let id: Int
-    let startTime: Date
-    let endTime: Date
+    let id: String   // v2: UUID string (was Int in v1)
     let score: WhoopSleepScore?
-
-    enum CodingKeys: String, CodingKey {
-        case id, startTime = "start_time", endTime = "end_time", score
-    }
 }
 
 struct WhoopSleepScore: Codable {
-    let stagesSummary: WhoopSleepStages
+    let stagesSummary: WhoopSleepStages?
     let sleepPerformancePercentage: Double?
     let sleepConsistencyPercentage: Double?
     let sleepEfficiencyPercentage: Double?
@@ -99,20 +95,15 @@ struct WhoopSleepStages: Codable {
 
 struct WhoopCycle: Codable, Identifiable {
     let id: Int
-    let startTime: Date
-    let endTime: Date?
     let score: WhoopCycleScore?
-
-    enum CodingKeys: String, CodingKey {
-        case id, startTime = "start_time", endTime = "end_time", score
-    }
 }
 
 struct WhoopCycleScore: Codable {
-    let strain: Double
-    let kilojoule: Double
-    let averageHeartRate: Double
-    let maxHeartRate: Double
+    // Optional: an in-progress cycle can be missing individual fields without breaking the decode.
+    let strain: Double?
+    let kilojoule: Double?
+    let averageHeartRate: Double?
+    let maxHeartRate: Double?
 
     enum CodingKeys: String, CodingKey {
         case strain, kilojoule

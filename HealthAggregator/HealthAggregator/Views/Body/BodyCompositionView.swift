@@ -82,62 +82,43 @@ struct BodyCompositionView: View {
                         .pickerStyle(.segmented)
                         .padding(.horizontal, 16)
 
-                        // Weight chart
+                        // Weight chart (interactive — drag to scrub)
                         if !filteredWeight.isEmpty {
-                            VStack(alignment: .leading, spacing: 12) {
+                            VStack(alignment: .leading, spacing: 10) {
                                 Text("Weight Trend")
                                     .font(.system(size: 16, weight: .bold))
                                     .foregroundStyle(Color.textPrimary)
 
-                                Chart(filteredWeight, id: \.0) { point in
-                                    LineMark(
-                                        x: .value("Date", point.0),
-                                        y: .value("lb", point.1 / 0.453592)
-                                    )
-                                    .foregroundStyle(Color.accentBlue)
-                                    .interpolationMethod(.catmullRom)
-
-                                    AreaMark(
-                                        x: .value("Date", point.0),
-                                        y: .value("lb", point.1 / 0.453592)
-                                    )
-                                    .foregroundStyle(Color.accentBlue.opacity(0.15).gradient)
-                                    .interpolationMethod(.catmullRom)
-                                }
-                                .chartXAxis {
-                                    AxisMarks(values: .automatic(desiredCount: 4)) { _ in
-                                        AxisValueLabel().foregroundStyle(Color.textSecondary)
-                                    }
-                                }
-                                .chartYAxis {
-                                    AxisMarks(values: .automatic) { _ in
-                                        AxisGridLine(stroke: StrokeStyle(dash: [4])).foregroundStyle(Color.cardBorder)
-                                        AxisValueLabel().foregroundStyle(Color.textSecondary)
-                                    }
-                                }
-                                .frame(height: 160)
+                                InteractiveTrendChart(
+                                    points: filteredWeight.map { ($0.0, $0.1 / 0.453592) },
+                                    color: .accentBlue,
+                                    unit: "lb",
+                                    valueFormat: { String(format: "%.1f", $0) },
+                                    yDomainPadding: 1.5,
+                                    height: 170
+                                )
                             }
                             .card()
                             .padding(.horizontal, 16)
                         }
 
-                        // Body fat chart
+                        // Body fat chart (interactive — drag to scrub). History values are stored as
+                        // a 0–1 fraction; ×100 to display whole percents (matches the headline metric).
                         if !filteredBodyFat.isEmpty {
-                            VStack(alignment: .leading, spacing: 12) {
+                            VStack(alignment: .leading, spacing: 10) {
                                 Text("Body Fat %")
                                     .font(.system(size: 16, weight: .bold))
                                     .foregroundStyle(Color.textPrimary)
 
-                                Chart(filteredBodyFat, id: \.0) { point in
-                                    LineMark(
-                                        x: .value("Date", point.0),
-                                        y: .value("%", point.1)
-                                    )
-                                    .foregroundStyle(Color.accentOrange)
-                                    .interpolationMethod(.catmullRom)
-                                }
-                                .chartYScale(domain: max(0, (filteredBodyFat.map(\.1).min() ?? 0) - 2)...((filteredBodyFat.map(\.1).max() ?? 30) + 2))
-                                .frame(height: 120)
+                                InteractiveTrendChart(
+                                    points: filteredBodyFat.map { ($0.0, $0.1 * 100) },
+                                    color: .accentOrange,
+                                    unit: "%",
+                                    valueFormat: { String(format: "%.1f", $0) },
+                                    showAverage: false,
+                                    yDomainPadding: 2,
+                                    height: 150
+                                )
                             }
                             .card()
                             .padding(.horizontal, 16)

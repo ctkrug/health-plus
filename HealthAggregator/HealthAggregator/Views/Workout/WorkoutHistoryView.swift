@@ -88,6 +88,7 @@ extension Calendar {
 
 struct VolumeChartCard: View {
     let store: WorkoutStore
+    @State private var selectedWeek: String? = nil
 
     private var weeklyData: [(String, Double)] {
         let calendar = Calendar.current
@@ -102,15 +103,28 @@ struct VolumeChartCard: View {
         }
     }
 
+    private var selectedValue: Double? {
+        guard let selectedWeek else { return nil }
+        return weeklyData.first { $0.0 == selectedWeek }?.1
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Weekly Volume")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(Color.textPrimary)
+            HStack {
+                Text("Weekly Volume")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(Color.textPrimary)
+                Spacer()
+                if let selectedWeek, let selectedValue {
+                    Text("\(selectedWeek): \(Int(selectedValue)) lb")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Color.accentBlue)
+                }
+            }
 
             Chart(weeklyData, id: \.0) { item in
                 BarMark(x: .value("Week", item.0), y: .value("lb", item.1))
-                    .foregroundStyle(Color.accentBlue.gradient)
+                    .foregroundStyle(item.0 == selectedWeek ? Color.accentGreen.gradient : Color.accentBlue.gradient)
                     .cornerRadius(4)
             }
             .chartXAxis {
@@ -122,6 +136,22 @@ struct VolumeChartCard: View {
                 AxisMarks(values: .automatic) { _ in
                     AxisGridLine(stroke: StrokeStyle(dash: [4])).foregroundStyle(Color.cardBorder)
                     AxisValueLabel().foregroundStyle(Color.textSecondary)
+                }
+            }
+            .chartOverlay { proxy in
+                GeometryReader { geo in
+                    Rectangle().fill(Color.clear).contentShape(Rectangle())
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    guard let plot = proxy.plotFrame else { return }
+                                    let x = value.location.x - geo[plot].origin.x
+                                    if let week: String = proxy.value(atX: x), week != selectedWeek {
+                                        selectedWeek = week
+                                        HapticsManager.selection()
+                                    }
+                                }
+                        )
                 }
             }
             .frame(height: 160)
