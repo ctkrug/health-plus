@@ -41,7 +41,7 @@ final class WhoopService {
     // MARK: - OAuth
 
     func startOAuthFlow(presenting anchor: ASPresentationAnchor) async {
-        let scopes = "offline read:recovery read:sleep read:workout read:cycle read:body_measurement"
+        let scopes = "offline read:recovery read:sleep read:workout read:cycles read:body_measurement read:profile"
         let state = UUID().uuidString
         var comps = URLComponents(string: "\(authBaseURL)/auth")!
         comps.queryItems = [
