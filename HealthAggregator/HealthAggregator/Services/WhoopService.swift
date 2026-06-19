@@ -40,6 +40,7 @@ final class WhoopService {
 
     // MARK: - OAuth
 
+    @MainActor
     func startOAuthFlow(presenting anchor: ASPresentationAnchor) async {
         await MainActor.run { authError = nil }   // clear any previous error
 
