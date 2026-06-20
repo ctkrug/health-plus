@@ -216,59 +216,19 @@ struct HabitSetupChatView: View {
                 )
                 conversationHistory.append(ClaudeMessage(role: "assistant", content: reply))
 
-                if let habits = parseHabits(from: reply) {
+                if let habits = HabitSetupParser.parseHabits(from: reply) {
                     parsedHabits = habits
                     let summary = "Perfect! I've set up \(habits.count) habits for you. Tap below to add them all to your tracker."
                     messages.append(ChatMessage(role: .assistant, content: summary))
                     setupDone = true
                 } else {
-                    messages.append(ChatMessage(role: .assistant, content: reply))
+                    // Never show a raw JSON/code blob to the user — strip any fenced block first.
+                    messages.append(ChatMessage(role: .assistant, content: HabitSetupParser.sanitizedReply(reply)))
                 }
             } catch {
                 messages.append(ChatMessage(role: .assistant, content: "Sorry, I hit an error: \(error.localizedDescription)"))
             }
             isLoading = false
-        }
-    }
-
-    private func parseHabits(from text: String) -> [Habit]? {
-        // Extract JSON block from response
-        guard let start = text.range(of: "```json"),
-              let end = text.range(of: "```", range: start.upperBound..<text.endIndex) else { return nil }
-        let jsonStr = String(text[start.upperBound..<end.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let data = jsonStr.data(using: .utf8),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let habitsArr = json["habits"] as? [[String: Any]] else { return nil }
-
-        return habitsArr.compactMap { dict -> Habit? in
-            guard let name = dict["name"] as? String,
-                  let catStr = dict["category"] as? String,
-                  let category = categoryFromString(catStr) else { return nil }
-            let icon = dict["icon"] as? String ?? category.icon
-            let colorHex = dict["colorHex"] as? String ?? category.colorHex
-            let slotStr = (dict["timeSlot"] as? String ?? "anytime").lowercased()
-            let slot: HabitTimeSlot = slotStr == "am" ? .am : slotStr == "pm" ? .pm : .anytime
-            let group = dict["routineGroup"] as? String
-            return Habit(name: name, category: category, icon: icon, colorHex: colorHex,
-                         timeSlot: slot, routineGroup: group)
-        }
-    }
-
-    private func categoryFromString(_ s: String) -> HabitCategory? {
-        switch s.lowercased() {
-        case "morning":                                                  return .morning
-        case "evening":                                                  return .evening
-        case "fitness":                                                  return .fitness
-        case "mindfulness":                                              return .mindfulness
-        case "nutrition":                                                return .nutrition
-        case "sleep":                                                    return .sleep
-        case "supplements":                                              return .supplements
-        case "skincaream", "skincare_am", "am skincare", "am_skincare": return .skincareAM
-        case "skincarepm", "skincare_pm", "pm skincare", "pm_skincare": return .skincareMP
-        case "dental":                                                   return .dental
-        case "hydration":                                                return .hydration
-        case "wellness":                                                 return .wellness
-        default:                                                         return .custom
         }
     }
 
