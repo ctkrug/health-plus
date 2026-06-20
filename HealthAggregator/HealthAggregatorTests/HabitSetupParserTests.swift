@@ -92,4 +92,55 @@ final class HabitSetupParserTests: XCTestCase {
         XCTAssertEqual(HabitSetupParser.categoryFromString("Nutrition"), .nutrition)
         XCTAssertEqual(HabitSetupParser.categoryFromString("skincare_pm"), .skincareMP)
     }
+
+    // MARK: - buildHabits(from:) — the forced-tool-use extraction path
+
+    func testBuildHabitsFromToolInput() {
+        // Shape mirrors a tool_use `input` block returned by runTool.
+        let input: [String: Any] = ["habits": [
+            ["name": "Creatine", "category": "supplements", "icon": "pills.fill",
+             "colorHex": "#A855F7", "timeSlot": "anytime"],
+            ["name": "Evening Walk", "category": "fitness", "timeSlot": "pm"],
+        ]]
+        let habits = HabitSetupParser.buildHabits(from: input)
+        XCTAssertEqual(habits?.count, 2)
+        XCTAssertEqual(habits?.first?.category, .supplements)
+        XCTAssertEqual(habits?.last?.timeSlot, .pm)
+        // Missing icon/color fall back to the category defaults.
+        XCTAssertEqual(habits?.last?.icon, HabitCategory.fitness.icon)
+    }
+
+    func testBuildHabitsEmptyReturnsNil() {
+        XCTAssertNil(HabitSetupParser.buildHabits(from: ["habits": []]))
+        XCTAssertNil(HabitSetupParser.buildHabits(from: [:]))
+    }
+
+    func testBuildHabitsDropsNamelessEntries() {
+        let input: [String: Any] = ["habits": [
+            ["category": "sleep"],
+            ["name": "Sleep by 11", "category": "sleep"],
+        ]]
+        XCTAssertEqual(HabitSetupParser.buildHabits(from: input)?.count, 1)
+    }
+
+    // MARK: - tool schema integrity (the contract the model is forced into)
+
+    func testToolSchemaIsWellFormedAndSerializable() {
+        XCTAssertEqual(HabitSetupParser.toolName, "save_habits")
+        XCTAssertFalse(HabitSetupParser.toolDescription.isEmpty)
+        // Must be JSON-serializable — it's sent straight to the API as the tool input_schema.
+        XCTAssertTrue(JSONSerialization.isValidJSONObject(HabitSetupParser.inputSchema))
+
+        let props = (HabitSetupParser.inputSchema["properties"] as? [String: Any])
+        let habitsSchema = props?["habits"] as? [String: Any]
+        XCTAssertEqual(habitsSchema?["type"] as? String, "array")
+    }
+
+    func testSchemaCategoryEnumMatchesCategoryMapping() {
+        // Every enum value the model can pick must map to a real, non-custom category (except "custom").
+        for value in HabitSetupParser.categoryValues where value != "custom" {
+            XCTAssertNotEqual(HabitSetupParser.categoryFromString(value), .custom,
+                              "Schema category \"\(value)\" doesn't map to a real category")
+        }
+    }
 }

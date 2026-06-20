@@ -31,8 +31,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.ctkrug.healthplus
         INFOPLIST_FILE: HealthAggregator/Info.plist
         CODE_SIGN_ENTITLEMENTS: HealthAggregator/HealthAggregator.entitlements
-        MARKETING_VERSION: "1.3.3"
-        CURRENT_PROJECT_VERSION: "18"
+        MARKETING_VERSION: "1.3.4"
+        CURRENT_PROJECT_VERSION: "19"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1"
         SUPPORTS_MACCATALYST: NO
@@ -71,8 +71,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.ctkrug.healthplus.widgets
         INFOPLIST_FILE: HealthAggregatorWidgets/Info.plist
         CODE_SIGN_ENTITLEMENTS: HealthAggregatorWidgets/HealthAggregatorWidgets.entitlements
-        MARKETING_VERSION: "1.3.3"
-        CURRENT_PROJECT_VERSION: "18"
+        MARKETING_VERSION: "1.3.4"
+        CURRENT_PROJECT_VERSION: "19"
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME: AccentColor
     capabilities:

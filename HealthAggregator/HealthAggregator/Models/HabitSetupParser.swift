@@ -6,10 +6,18 @@ import Foundation
 enum HabitSetupParser {
 
     /// Build habits from a model reply, or nil if it isn't a (valid, non-empty) habits payload.
+    /// Legacy text path (tolerant fenced/bare-JSON extraction) — kept as a fallback. The primary
+    /// path is now `buildHabits(from:)` fed by a forced tool call (guaranteed-valid structure).
     static func parseHabits(from text: String) -> [Habit]? {
-        guard let json = extractHabitsJSON(from: text),
-              let habitsArr = json["habits"] as? [[String: Any]] else { return nil }
+        guard let json = extractHabitsJSON(from: text) else { return nil }
+        return buildHabits(from: json)
+    }
 
+    /// Build habits from an already-parsed JSON object — e.g. a tool_use `input` from `runTool`.
+    /// Returns nil for an empty/invalid payload. This is the reliable path: the structure is
+    /// constrained by the tool's input schema, so there's no prose to strip or fence to find.
+    static func buildHabits(from json: [String: Any]) -> [Habit]? {
+        guard let habitsArr = json["habits"] as? [[String: Any]] else { return nil }
         let habits = habitsArr.compactMap { dict -> Habit? in
             guard let name = (dict["name"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
                   !name.isEmpty else { return nil }
@@ -23,6 +31,51 @@ enum HabitSetupParser {
                          timeSlot: slot, routineGroup: group)
         }
         return habits.isEmpty ? nil : habits
+    }
+
+    // MARK: - Extraction tool (forced tool use)
+
+    /// Valid category strings, mirrored from `categoryFromString` — kept here so the tool schema's
+    /// enum can constrain the model to categories the app actually understands.
+    static let categoryValues = [
+        "morning", "evening", "fitness", "mindfulness", "nutrition", "sleep",
+        "supplements", "skincareAM", "skincareMP", "dental", "hydration", "wellness", "custom",
+    ]
+
+    static let toolName = "save_habits"
+
+    static let toolDescription = """
+    Save the full set of daily wellness habits the user wants to track, extracted from the \
+    conversation. Call this exactly once with every habit they mentioned (supplements, routines, \
+    fitness, mindfulness, nutrition, skincare, dental, hydration, sleep, etc.). Infer a sensible \
+    category, SF Symbol icon, and hex color for each. Do not invent habits the user didn't mention.
+    """
+
+    /// JSON Schema for the `save_habits` tool input. Built as a dictionary so it can be passed
+    /// straight to `JSONSerialization` in the request body.
+    static var inputSchema: [String: Any] {
+        [
+            "type": "object",
+            "properties": [
+                "habits": [
+                    "type": "array",
+                    "description": "Every habit the user wants to track.",
+                    "items": [
+                        "type": "object",
+                        "properties": [
+                            "name": ["type": "string", "description": "Short habit name, e.g. \"Vitamin D\" or \"Morning Meditation\"."],
+                            "category": ["type": "string", "enum": categoryValues],
+                            "icon": ["type": "string", "description": "An SF Symbol name, e.g. pills.fill, drop.fill, figure.run, moon.stars.fill."],
+                            "colorHex": ["type": "string", "description": "Hex color matching the category feel, e.g. #A855F7."],
+                            "timeSlot": ["type": "string", "enum": ["am", "pm", "anytime"]],
+                            "routineGroup": ["type": "string", "description": "Optional group label, e.g. \"AM Skincare\"."],
+                        ],
+                        "required": ["name", "category"],
+                    ],
+                ],
+            ],
+            "required": ["habits"],
+        ]
     }
 
     /// Robustly pull the habits JSON object out of a reply: tolerates ```json fences, plain ```
@@ -63,7 +116,7 @@ enum HabitSetupParser {
         case "sleep":                                                  return .sleep
         case "supplements":                                            return .supplements
         case "skincaream", "skincare_am", "am skincare", "am_skincare": return .skincareAM
-        case "skincarepm", "skincare_pm", "pm skincare", "pm_skincare": return .skincareMP
+        case "skincarepm", "skincaremp", "skincare_pm", "skincare_mp", "pm skincare", "pm_skincare": return .skincareMP
         case "dental":                                                 return .dental
         case "hydration":                                              return .hydration
         case "wellness":                                               return .wellness

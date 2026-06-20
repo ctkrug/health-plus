@@ -162,8 +162,18 @@ and every `UserDefaults(suiteName:)` call. There's no single constant; grep for 
 - **WHOOP** — OAuth2. Credentials live in `Info.plist` (`WhoopClientID`/`WhoopClientSecret`),
   redirect `healthaggregator://whoop/callback`, scopes include `read:cycles` (note the `s`).
   Tokens stored in Keychain; refreshed 60s before expiry.
-- **Claude API** — user supplies their own key in Settings (stored in UserDefaults
-  `anthropic_api_key`). Model: `claude-haiku-4-5-20251001`. Used only for the Habits AI setup chat.
+- **Claude API** (`ClaudeService`) — key bundled in Info.plist (`AnthropicAPIKey`). Used only for the
+  Habits AI setup chat, which is **two-phase by design**:
+  1. **Conversation** — `claude-haiku-4-5-20251001`, plain text. The chat model *only* talks; it never
+     emits JSON (a chat model asked to switch into "data mode" reliably refuses to, which caused the old
+     "say that's everything" loop).
+  2. **Extraction** — a separate one-shot pass via `ClaudeService.runTool(...)` (forced tool use,
+     `tool_choice` pinned to `save_habits`) on `claude-sonnet-4-6`. Output is constrained to the tool's
+     `input_schema` (defined in `HabitSetupParser.inputSchema`), so it's guaranteed-valid structure —
+     no fenced-JSON guessing. Triggered deterministically by the **Done button** or a local end-intent
+     phrase (`looksLikeDone`), never by the model deciding it's finished.
+  `HabitSetupParser.buildHabits(from:)` maps the tool input → `[Habit]`; the legacy text path
+  (`parseHabits(from:)` + `sanitizedReply`) is kept only as a belt-and-braces fallback.
 - **Renpho / MyFitnessPal / Swim.com** — no direct API; they sync into Apple Health, and the app
   reads from there. Settings shows setup instructions for each.
 

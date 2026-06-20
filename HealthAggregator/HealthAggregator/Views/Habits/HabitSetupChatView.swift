@@ -7,79 +7,53 @@ struct HabitSetupChatView: View {
     @State private var messages: [ChatMessage] = []
     @State private var inputText = ""
     @State private var isLoading = false
+    @State private var isFinishing = false
     @State private var conversationHistory: [ClaudeMessage] = []
     @State private var setupDone = false
     @State private var parsedHabits: [Habit] = []
-    @State private var showConfirm = false
     @FocusState private var inputFocused: Bool
 
     private var store: HabitStore { appState.habitStore }
 
-    private let systemPrompt = """
-    You are a personal wellness coach helping someone set up their daily habits tracker in a health app. \
-    Your job is to have a friendly conversation to understand their wellness habits across all areas of life: \
-    morning routine, evening routine, fitness, mindfulness, nutrition, skincare, supplements, dental, hydration, sleep, and more.
-
-    Ask ONE question at a time, in a friendly and concise way. Cover:
-    1. Morning routine (wake time habits, morning workout, journaling, meditation, etc.)
-    2. Supplement stack (names of each supplement)
-    3. AM skincare routine (cleanser, vitamin C serum, sunscreen, etc.)
-    4. Fitness habits (workouts, steps, mobility, stretching)
-    5. Nutrition habits (protein goal, no alcohol, meal prep, etc.)
-    6. Mindfulness (meditation, breathing, gratitude, journaling)
-    7. Evening/PM skincare routine (cleanser, retinol, moisturizer, etc.)
-    8. Dental hygiene (floss, mouthwash, whitening strips)
-    9. Hydration goal
-    10. Sleep habits (consistent bedtime, no screens, sleep tracking)
-    11. Any other habits they want to track
-
-    After you have gathered all the information (usually 6-9 exchanges), output ONLY a JSON block in this exact format — \
-    no prose before or after the JSON:
-
-    ```json
-    {
-      "habits": [
-        {
-          "name": "Vitamin D",
-          "category": "supplements",
-          "icon": "pills.fill",
-          "colorHex": "#A855F7",
-          "timeSlot": "anytime"
-        },
-        {
-          "name": "Morning Meditation",
-          "category": "morning",
-          "icon": "sunrise.fill",
-          "colorHex": "#F59E0B",
-          "timeSlot": "am"
-        },
-        {
-          "name": "Cleanser",
-          "category": "skincareAM",
-          "icon": "drop.fill",
-          "colorHex": "#F97316",
-          "timeSlot": "am",
-          "routineGroup": "AM Skincare"
-        }
-      ]
+    /// Whether the user has said enough that "Done" is worth offering.
+    private var canFinish: Bool {
+        conversationHistory.contains { $0.role == "user" } && !isLoading && !isFinishing
     }
-    ```
 
-    Valid category values: morning, evening, fitness, mindfulness, nutrition, sleep, supplements, skincareAM, skincareMP, dental, hydration, wellness, custom
-    Valid timeSlot values: am, pm, anytime
-    Valid icons (use these SF Symbol names): pills.fill, drop.fill, mouth.fill, heart.fill, heart.text.square.fill, \
-    sun.max.fill, sunrise.fill, moon.stars.fill, moon.fill, flame.fill, figure.run, figure.mind.and.body, \
-    figure.strengthtraining.traditional, book.fill, shower.fill, checkmark.circle.fill, sparkles, wind, leaf.fill, \
-    fork.knife, bed.double.fill, brain.head.profile, lungs.fill, stopwatch.fill, trophy.fill, bolt.fill, \
-    hand.raised.fill, eye.fill, music.note, pencil, star.fill
+    // The chat model ONLY converses — it never emits JSON. Turning the conversation into habits is a
+    // separate, deterministic extraction step (forced tool use), so the model can't get stuck trying
+    // to switch into "data mode" and the user is never asked to phrase a magic "that's everything".
+    private let systemPrompt = """
+    You are a warm, concise personal wellness coach helping someone set up their daily habits tracker. \
+    Have a natural conversation to learn the habits they want to track across all areas of life: \
+    morning routine, evening routine, fitness, mindfulness, nutrition, AM/PM skincare, supplements, \
+    dental, hydration, sleep, and anything else.
 
-    Use colorHex values that match the category feel:
-    morning → #F59E0B (amber), evening → #8B5CF6 (purple), fitness → #EF4444 (red), mindfulness → #10B981 (teal), \
-    nutrition → #F97316 (orange), sleep → #6366F1 (indigo), supplements → #A855F7 (violet), \
-    skincareAM → #F97316 (orange), skincareMP → #8B5CF6 (purple), dental → #3B82F6 (blue), \
-    hydration → #06B6D4 (cyan), wellness → #10B981 (green)
+    Rules:
+    - Ask ONE question at a time, friendly and brief.
+    - Move through the areas naturally; don't interrogate. It's fine to skip areas they clearly don't care about.
+    - NEVER output JSON, code blocks, lists of fields, or any structured data. The app saves the habits \
+    for them automatically — you only talk.
+    - When the user signals they're finished (or you've covered the ground), reply with ONE short, warm \
+    sentence letting them know they can tap Done to finish. Do not summarize every habit back to them.
+    """
 
-    Once you output the JSON, you are done. Do not add any text after the JSON block.
+    /// System prompt for the separate extraction pass (a different, stronger model with forced tool use).
+    private let extractionSystemPrompt = """
+    You are a data-extraction step. Read the conversation between a wellness coach and a user, then call \
+    the save_habits tool exactly once with every habit the user said they want to track.
+
+    Guidance:
+    - Include only habits the user actually mentioned or agreed to — do not invent extras.
+    - For each, infer a sensible category, an SF Symbol icon, a hex color matching the category, and a \
+    timeSlot (am / pm / anytime). Group related skincare/routine items with routineGroup when natural.
+    - Suggested colors: morning #F59E0B, evening #8B5CF6, fitness #EF4444, mindfulness #10B981, \
+    nutrition #F97316, sleep #6366F1, supplements #A855F7, skincareAM #F97316, skincareMP #8B5CF6, \
+    dental #3B82F6, hydration #06B6D4, wellness #10B981.
+    - Good icons: pills.fill, drop.fill, mouth.fill, heart.fill, sunrise.fill, moon.stars.fill, \
+    flame.fill, figure.run, figure.mind.and.body, figure.strengthtraining.traditional, book.fill, \
+    shower.fill, sparkles, wind, leaf.fill, fork.knife, bed.double.fill, brain.head.profile, \
+    lungs.fill, stopwatch.fill, bolt.fill, eye.fill, pencil, star.fill.
     """
 
     var body: some View {
@@ -113,7 +87,7 @@ struct HabitSetupChatView: View {
                                     ChatBubble(message: msg)
                                         .id(msg.id)
                                 }
-                                if isLoading {
+                                if isLoading || isFinishing {
                                     TypingIndicator()
                                 }
                             }
@@ -128,24 +102,42 @@ struct HabitSetupChatView: View {
 
                     // Input
                     if !setupDone {
-                        HStack(spacing: 10) {
-                            TextField("Message…", text: $inputText, axis: .vertical)
-                                .lineLimit(1...4)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 10)
-                                .background(Color.cardBackground)
-                                .clipShape(RoundedRectangle(cornerRadius: 20))
-                                .foregroundStyle(Color.textPrimary)
-                                .focused($inputFocused)
-
-                            Button {
-                                sendMessage()
-                            } label: {
-                                Image(systemName: "arrow.up.circle.fill")
-                                    .font(.system(size: 34))
-                                    .foregroundStyle(inputText.isEmpty || isLoading ? Color.textTertiary : Color.accentBlue)
+                        VStack(spacing: 10) {
+                            // Deterministic finish — never rely on the model recognizing "I'm done".
+                            if canFinish {
+                                Button {
+                                    finishSetup()
+                                } label: {
+                                    Label("Done — build my habits", systemImage: "checkmark.circle.fill")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 11)
+                                        .background(Color.accentGreen.opacity(0.16))
+                                        .foregroundStyle(Color.accentGreen)
+                                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                                }
                             }
-                            .disabled(inputText.isEmpty || isLoading)
+
+                            HStack(spacing: 10) {
+                                TextField("Message…", text: $inputText, axis: .vertical)
+                                    .lineLimit(1...4)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 10)
+                                    .background(Color.cardBackground)
+                                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                                    .foregroundStyle(Color.textPrimary)
+                                    .focused($inputFocused)
+                                    .disabled(isFinishing)
+
+                                Button {
+                                    sendMessage()
+                                } label: {
+                                    Image(systemName: "arrow.up.circle.fill")
+                                        .font(.system(size: 34))
+                                        .foregroundStyle(inputText.isEmpty || isLoading || isFinishing ? Color.textTertiary : Color.accentBlue)
+                                }
+                                .disabled(inputText.isEmpty || isLoading || isFinishing)
+                            }
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
@@ -205,8 +197,15 @@ struct HabitSetupChatView: View {
         inputText = ""
         messages.append(ChatMessage(role: .user, content: text))
         conversationHistory.append(ClaudeMessage(role: "user", content: text))
-        isLoading = true
 
+        // If the user signals they're finished, go straight to extraction instead of another chat
+        // turn — so "that's everything" (and its many variations) just works, no loop.
+        if looksLikeDone(text) {
+            finishSetup()
+            return
+        }
+
+        isLoading = true
         Task {
             do {
                 let reply = try await ClaudeService.shared.send(
@@ -215,16 +214,9 @@ struct HabitSetupChatView: View {
                     userMessage: text
                 )
                 conversationHistory.append(ClaudeMessage(role: "assistant", content: reply))
-
-                if let habits = HabitSetupParser.parseHabits(from: reply) {
-                    parsedHabits = habits
-                    let summary = "Perfect! I've set up \(habits.count) habits for you. Tap below to add them all to your tracker."
-                    messages.append(ChatMessage(role: .assistant, content: summary))
-                    setupDone = true
-                } else {
-                    // Never show a raw JSON/code blob to the user — strip any fenced block first.
-                    messages.append(ChatMessage(role: .assistant, content: HabitSetupParser.sanitizedReply(reply)))
-                }
+                // The chat model never emits JSON now, but keep the sanitizer as a belt-and-braces
+                // guard so a stray code block can never reach the user.
+                messages.append(ChatMessage(role: .assistant, content: HabitSetupParser.sanitizedReply(reply)))
             } catch {
                 messages.append(ChatMessage(role: .assistant, content: "Sorry, I hit an error: \(error.localizedDescription)"))
             }
@@ -232,11 +224,65 @@ struct HabitSetupChatView: View {
         }
     }
 
+    /// Turn the whole conversation into habits via a dedicated extraction pass (forced tool use on a
+    /// stronger model). Deterministic — triggered by the Done button or an end-of-chat phrase, not by
+    /// hoping the chat model decides to emit JSON.
+    private func finishSetup() {
+        guard !isFinishing, !isLoading else { return }
+        inputFocused = false
+        isFinishing = true
+        Task {
+            do {
+                let input = try await ClaudeService.shared.runTool(
+                    model: ClaudeService.extractionModel,
+                    system: extractionSystemPrompt,
+                    messages: conversationHistory,
+                    toolName: HabitSetupParser.toolName,
+                    toolDescription: HabitSetupParser.toolDescription,
+                    inputSchema: HabitSetupParser.inputSchema
+                )
+                if let habits = HabitSetupParser.buildHabits(from: input) {
+                    parsedHabits = habits
+                    messages.append(ChatMessage(role: .assistant,
+                        content: "Perfect! I've put together \(habits.count) habit\(habits.count == 1 ? "" : "s") for you. Tap below to add them to your tracker."))
+                    setupDone = true
+                } else {
+                    messages.append(ChatMessage(role: .assistant,
+                        content: "I couldn't find any habits to add yet — tell me a bit more about what you'd like to track, then tap Done again."))
+                }
+            } catch {
+                messages.append(ChatMessage(role: .assistant,
+                    content: "I had trouble building your habits just now. Mind tapping Done once more?"))
+            }
+            isFinishing = false
+        }
+    }
+
+    /// Broad, local end-of-conversation detection. The Done button is the guaranteed path; this just
+    /// makes natural sign-offs ("that's everything", "I'm done", "nope, that's it") work too. Finishing
+    /// is non-destructive (it shows a confirm screen), so a generous match is fine.
+    private func looksLikeDone(_ text: String) -> Bool {
+        let t = text.lowercased()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: CharacterSet(charactersIn: ".!?"))
+        let phrases = [
+            "that's everything", "thats everything", "that is everything",
+            "that's it", "thats it", "that is it", "that's all", "thats all", "that is all",
+            "i'm done", "im done", "i am done", "all done", "we're done", "were done",
+            "nothing else", "no more", "that's enough", "thats enough", "that's it for now",
+            "good for now", "i'm finished", "im finished", "i'm good", "im good", "all set",
+        ]
+        if phrases.contains(where: { t.contains($0) }) { return true }
+        let exactShort: Set<String> = ["done", "finished", "finish", "complete", "yep that's it", "nope", "no thanks"]
+        return t.split(separator: " ").count <= 3 && exactShort.contains(t)
+    }
+
     private func reset() {
         messages = []
         conversationHistory = []
         parsedHabits = []
         setupDone = false
+        isFinishing = false
         startConversation()
     }
 }
