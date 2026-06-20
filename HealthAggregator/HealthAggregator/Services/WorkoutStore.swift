@@ -210,14 +210,34 @@ final class WorkoutStore {
         return (nil, nil)
     }
 
-    /// A session built from a template, pre-filled with last-used values. Does NOT start the workout.
+    /// A session built from a template, pre-filled with progression-engine suggestions.
+    /// If you've done this exercise before, every set is pre-populated with the correct next
+    /// weight/reps based on your history (repRange: hit 12 → bump weight). First-timers get
+    /// the template defaults. Does NOT start the workout.
     func previewSession(for template: WorkoutTemplate) -> WorkoutSession {
         var session = template.toSession()
         for i in session.exercises.indices {
-            let (w, r) = lastValues(forExercise: session.exercises[i].name)
-            for j in session.exercises[i].sets.indices {
-                if let w { session.exercises[i].sets[j].weightKg = w }
-                if let r { session.exercises[i].sets[j].reps = r }
+            let rule = session.exercises[i].progressionRule
+            if let rule {
+                let sugg = ProgressionEngine.suggestion(
+                    for: session.exercises[i].name, rule: rule, history: sessions)
+                // Only override if we have history or a concrete weight suggestion
+                if let suggestedWeight = sugg.suggestedWeightKg {
+                    for j in session.exercises[i].sets.indices {
+                        session.exercises[i].sets[j].weightKg = suggestedWeight
+                        session.exercises[i].sets[j].targetWeightKg = suggestedWeight
+                        session.exercises[i].sets[j].reps = sugg.suggestedReps
+                        session.exercises[i].sets[j].targetReps = sugg.suggestedReps
+                    }
+                } else {
+                    // First time — fall back to template defaults (already set by toSession)
+                    let (w, _) = lastValues(forExercise: session.exercises[i].name)
+                    if let w {
+                        for j in session.exercises[i].sets.indices {
+                            session.exercises[i].sets[j].weightKg = w
+                        }
+                    }
+                }
             }
         }
         return session

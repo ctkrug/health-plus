@@ -60,7 +60,7 @@ enum ProgressionStrategy: String, Codable, CaseIterable {
     }
 }
 
-struct ProgressionRule: Codable {
+struct ProgressionRule: Codable, Equatable {
     var strategy: ProgressionStrategy = .doubleProgression
     var equipment: Equipment = .barbell
     var minReps: Int = 5

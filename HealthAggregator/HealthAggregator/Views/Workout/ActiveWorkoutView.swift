@@ -375,8 +375,11 @@ struct ExerciseSection: View {
     let onSetLogged: (WorkoutSet) -> Void
 
     private var suggestion: ProgressionSuggestion? {
-        guard let pe = programExercise else { return nil }
-        return store.suggestion(for: exercise.name, rule: pe.rule)
+        // Program workouts use the program's rule; template workouts fall back to the
+        // rule derived from the template exercise's sets/reps (so every workout gets
+        // progression guidance regardless of how it was started).
+        guard let rule = programExercise?.rule ?? exercise.progressionRule else { return nil }
+        return store.suggestion(for: exercise.name, rule: rule)
     }
 
     private var previousBest: String? {

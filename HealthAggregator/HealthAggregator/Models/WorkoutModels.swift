@@ -86,6 +86,7 @@ struct WorkoutExercise: Identifiable, Codable, Equatable {
     var notes: String = ""
     var isSuperset: Bool = false
     var supersetGroupID: UUID? = nil
+    var progressionRule: ProgressionRule? = nil   // set for template-started workouts so the progression engine fires
 
     var completedSets: [WorkoutSet] { sets.filter(\.isCompleted) }
     var totalVolume: Double {
@@ -156,6 +157,7 @@ struct WorkoutTemplate: Identifiable, Codable {
             var ex = WorkoutExercise(name: te.name, orderIndex: i)
             ex.isSuperset = te.supersetGroupID != nil
             ex.supersetGroupID = te.supersetGroupID
+            ex.progressionRule = te.derivedProgressionRule
             ex.sets = (0..<te.defaultSets).map { j in
                 WorkoutSet(
                     setNumber: j + 1,
@@ -186,6 +188,31 @@ struct TemplateExercise: Identifiable, Codable {
     var defaultDistanceMeters: Double? = nil
     var muscleGroups: [String] = []
     var supersetGroupID: UUID? = nil     // exercises sharing an ID are performed as a superset
+
+    /// Derive a repRange ProgressionRule from this template's sets/reps.
+    /// Equipment is inferred from the exercise name (machine → .machine, barbell cues → .barbell,
+    /// else .dumbbell). This lets template-started workouts drive the same progression engine
+    /// that program workouts use.
+    var derivedProgressionRule: ProgressionRule {
+        let n = name.lowercased()
+        let eq: Equipment
+        if n.contains("machine") || n.contains("lat pull") || n.contains("leg press")
+            || n.contains("leg extension") || n.contains("leg curl") || n.contains("chest press machine")
+            || n.contains("rowing machine") || n.contains("shoulder press machine") {
+            eq = .machine
+        } else if n.contains("barbell") || n.contains("deadlift") || n.contains("bench press") && !n.contains("dumbbell") {
+            eq = .barbell
+        } else {
+            eq = .dumbbell
+        }
+        return ProgressionRule(
+            strategy: .repRange,
+            equipment: eq,
+            minReps: defaultReps ?? 8,
+            maxReps: maxReps ?? max((defaultReps ?? 8) + 4, 12),
+            sets: defaultSets
+        )
+    }
 }
 
 // MARK: - PR Record
