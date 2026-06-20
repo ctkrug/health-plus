@@ -190,27 +190,41 @@ struct TemplateExercise: Identifiable, Codable {
     var supersetGroupID: UUID? = nil     // exercises sharing an ID are performed as a superset
 
     /// Derive a repRange ProgressionRule from this template's sets/reps.
-    /// Equipment is inferred from the exercise name (machine → .machine, barbell cues → .barbell,
-    /// else .dumbbell). This lets template-started workouts drive the same progression engine
-    /// that program workouts use.
+    /// Weight increment rules:
+    ///   Machine            → +10 lb (4.536 kg)
+    ///   Bilateral dumbbell → +10 lb (both arms lift simultaneously; 5 lb per dumbbell × 2)
+    ///   Unilateral dumbbell → +5 lb (one dumbbell at a time: curls, rows, laterals, extensions)
     var derivedProgressionRule: ProgressionRule {
         let n = name.lowercased()
+
         let eq: Equipment
-        if n.contains("machine") || n.contains("lat pull") || n.contains("leg press")
-            || n.contains("leg extension") || n.contains("leg curl") || n.contains("chest press machine")
-            || n.contains("rowing machine") || n.contains("shoulder press machine") {
+        let progressionKg: Double
+
+        if n.contains("machine") || n.contains("lat pull") || n.contains("lat pulldown")
+            || n.contains("leg press") || n.contains("leg extension") || n.contains("leg curl") {
             eq = .machine
-        } else if n.contains("barbell") || n.contains("deadlift") || n.contains("bench press") && !n.contains("dumbbell") {
+            progressionKg = 4.536  // 10 lbs
+        } else if n.contains("barbell") || (n.contains("deadlift") && !n.contains("dumbbell"))
+                   || (n.contains("squat") && !n.contains("goblet") && !n.contains("dumbbell")) {
             eq = .barbell
+            progressionKg = 2.268  // 5 lbs (2.5 lb plate each side)
         } else {
             eq = .dumbbell
+            // Bilateral: both hands push/pull simultaneously → 5 lb per dumbbell = +10 total
+            let isBilateral = n.contains("bench press") || n.contains("incline bench")
+                || n.contains("overhead press") || n.contains("shoulder press")
+                || n.contains("arnold press") || n.contains("push press")
+                || n.contains("goblet squat") || n.contains("chest fly")
+            progressionKg = isBilateral ? 4.536 : 2.268
         }
+
         return ProgressionRule(
             strategy: .repRange,
             equipment: eq,
             minReps: defaultReps ?? 8,
             maxReps: maxReps ?? max((defaultReps ?? 8) + 4, 12),
-            sets: defaultSets
+            sets: defaultSets,
+            progressionKg: progressionKg
         )
     }
 }
