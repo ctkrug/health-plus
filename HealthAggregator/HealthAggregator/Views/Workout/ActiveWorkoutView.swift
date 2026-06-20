@@ -49,16 +49,43 @@ struct ActiveWorkoutView: View {
                     }
 
                     ScrollView {
-                        LazyVStack(spacing: 16) {
-                            ForEach($session.exercises) { $exercise in
+                        LazyVStack(spacing: 0) {
+                            ForEach($session.exercises.indices, id: \.self) { idx in
+                                let exercise = session.exercises[idx]
+                                let nextIsSupersetPartner: Bool = {
+                                    guard let gid = exercise.supersetGroupID,
+                                          idx + 1 < session.exercises.count
+                                    else { return false }
+                                    return session.exercises[idx + 1].supersetGroupID == gid
+                                }()
+
                                 ExerciseSection(
-                                    exercise: $exercise,
+                                    exercise: $session.exercises[idx],
                                     session: session,
                                     store: store,
                                     programExercise: activeProgramExercise(for: exercise.name),
                                     onSetLogged: { set in handleSetLogged(set, exercise: exercise) }
                                 )
                                 .padding(.horizontal, 16)
+                                .padding(.top, 16)
+
+                                if nextIsSupersetPartner {
+                                    HStack(spacing: 6) {
+                                        Rectangle()
+                                            .fill(Color.accentGreen.opacity(0.35))
+                                            .frame(width: 2)
+                                            .frame(height: 20)
+                                            .padding(.leading, 30)
+                                        Text("SUPERSET")
+                                            .font(.system(size: 9, weight: .bold))
+                                            .foregroundStyle(Color.accentGreen)
+                                            .tracking(1.2)
+                                        Spacer()
+                                    }
+                                    .padding(.horizontal, 16)
+                                } else {
+                                    Spacer().frame(height: 0)
+                                }
                             }
 
                             // Add exercise
@@ -376,6 +403,17 @@ struct ExerciseSection: View {
                     }
                 }
                 Spacer()
+
+                // Superset badge
+                if exercise.isSuperset {
+                    Label("SS", systemImage: "arrow.left.arrow.right")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(Color.accentGreen)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.accentGreen.opacity(0.15))
+                        .clipShape(Capsule())
+                }
 
                 // Equipment badge
                 if let pe = programExercise {

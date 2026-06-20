@@ -154,6 +154,8 @@ struct WorkoutTemplate: Identifiable, Codable {
         var session = WorkoutSession(name: name, type: type, startDate: Date())
         session.exercises = exercises.enumerated().map { i, te in
             var ex = WorkoutExercise(name: te.name, orderIndex: i)
+            ex.isSuperset = te.supersetGroupID != nil
+            ex.supersetGroupID = te.supersetGroupID
             ex.sets = (0..<te.defaultSets).map { j in
                 WorkoutSet(
                     setNumber: j + 1,
@@ -176,13 +178,14 @@ struct TemplateExercise: Identifiable, Codable {
     var orderIndex: Int
     var defaultSets: Int = 3
     var defaultReps: Int? = 8
-    var maxReps: Int? = nil        // upper end of rep range (e.g. 12 in "8–12"); nil = exact reps
+    var maxReps: Int? = nil              // upper end of rep range (e.g. 12 in "8–12"); nil = exact reps
     var defaultWeightKg: Double? = nil
     var defaultWeightUnit: WeightUnit = .lbs
     var restSeconds: Int = 90
     var strokeType: StrokeType? = nil
     var defaultDistanceMeters: Double? = nil
     var muscleGroups: [String] = []
+    var supersetGroupID: UUID? = nil     // exercises sharing an ID are performed as a superset
 }
 
 // MARK: - PR Record

@@ -204,6 +204,82 @@ Refs:
 
 ---
 
+## 10. Supersets — Pairing Logic & Science
+
+**Code:** `Services/SupersetEngine.swift`
+
+### What the research says
+
+A **superset** is two (or more) exercises performed back-to-back with minimal rest between them.
+Three distinct types exist; the app recommends only types 1 and 3 because they preserve or enhance
+performance on the second exercise:
+
+| Type | Definition | Performance effect on 2nd set |
+|------|-----------|-------------------------------|
+| **Antagonist** | Opposing muscle groups (bench → row) | **+5–15% more reps** vs straight sets (Robbins 2009, Paz 2017) |
+| **Agonist (compound sets)** | Same muscle twice (incline → flat bench) | −10–20% reps; not recommended for strength |
+| **Non-competing** | Unrelated muscles (bench → leg curl) | Neutral; saves time but no PAP benefit |
+
+The mechanism for the antagonist boost is twofold:
+1. **Reciprocal inhibition:** the nervous system relaxes the antagonist when the agonist contracts —
+   doing a set of rows first makes the chest "turn off" more efficiently on the next bench set.
+2. **Post-activation potentiation (PAP):** light activation of the antagonist potentiates agonist
+   force output in the immediately following set.
+
+Paz et al. (2017) found antagonist paired sets produced **equivalent or greater total volume** in
+the same or less training time compared to straight sets with equal rest. Time savings in their
+protocol: ~30% workout duration reduction.
+
+### Recommended pairings (used by SupersetEngine)
+
+The app scores pairs by movement-pattern antagonism. Score 3 = direct antagonist (maximum benefit),
+score 1 = non-competing (time-efficient only):
+
+| Pattern A | Pattern B | Score | Classic example |
+|-----------|-----------|-------|-----------------|
+| Horizontal Push | Horizontal Pull | 3 | Bench Press ↔ Dumbbell Row |
+| Vertical Push | Vertical Pull | 3 | OHP ↔ Lat Pulldown |
+| Elbow Flexion (biceps) | Elbow Extension (triceps) | 3 | Curl ↔ Tricep Extension |
+| Knee Dominant (quads) | Hip Dominant (hamstrings/glutes) | 3 | Squat ↔ RDL / Leg Ext ↔ Leg Curl |
+| Anterior Shoulder | Posterior Shoulder | 2 | Lateral Raise ↔ Rear Delt Fly |
+| Upper Body (any) | Lower Body (any) | 1 | Bench ↔ Leg Curl (non-competing) |
+
+Pairs with score < 1 (same muscle group or same movement pattern) are never recommended.
+
+### Rest intervals with supersets
+
+Within a superset: **0–15 s** transition between exercises A and B (just switch stations).
+After completing both: **60–90 s** rest before the next round. Net rest per muscle is the time to
+complete the partner's set — typically 30–45 s per exercise — which is adequate for hypertrophy
+loads (8–15 reps) but not for maximal strength (1–5RM). For heavy strength work, full 2–3 min rest
+between rounds is recommended.
+
+The app does not currently limit supersets by load; users working at low rep ranges should increase
+the between-round rest manually.
+
+### Classification heuristics
+
+`SupersetEngine.classify(_ exercise: TemplateExercise)` identifies movement pattern via:
+1. Lookup of `muscleGroups` from `ExerciseLibrary.find(name)` (most reliable)
+2. Keyword match on exercise name (fallback for user-created exercises)
+
+Priority order when muscle groups overlap (e.g., a row also works biceps): the **primary mover**
+determines the pattern. "Lats / Mid Back" → Horizontal Pull even if "Biceps" also appears.
+
+Refs:
+- Robbins DW, Young WB, Behm DG. *The effect of an upper-body agonist-antagonist resistance training
+  protocol on volume load and efficiency.* J Strength Cond Res. 2010;24(10):2632–40.
+- Paz GA, Robbins DW, de Oliveira CG, et al. *Volume load and neuromuscular fatigue during an acute
+  bout of agonist-antagonist paired sets vs. traditional sets.* J Strength Cond Res. 2017;31(8):2087–93.
+- Weakley JJ, Till K, Read DB, et al. *The effects of superset configuration on kinetic, kinematic,
+  and RPE measures during a compound resistance training protocol.* J Strength Cond Res. 2020;34(1):65–72.
+- Farinatti PTV, Alves BC. *Influence of rest interval lengths on blood pressure, heart rate, and
+  perceived exertion following a strength training session in older women.* J Strength Cond Res. 2013.
+- Maia MF et al. *Effects of different rest intervals between antagonist paired sets on repetition
+  performance and muscle activation.* J Strength Cond Res. 2015;29(10):2816–24.
+
+---
+
 ## Maintenance notes
 - All numbers are centralized in `InsightsEngine.swift`. No thresholds should be hardcoded in views.
 - Profile inputs (sex, age, height, VO₂max) come from HealthKit characteristic/quantity types in
