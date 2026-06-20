@@ -118,12 +118,20 @@ struct InteractiveTrendChart: View {
                 Rectangle()
                     .fill(Color.clear)
                     .contentShape(Rectangle())
-                    .gesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { value in updateSelection(at: value.location, proxy: proxy, geo: geo) }
-                    )
-                    // A discrete tap also selects (covers a quick tap with zero drag movement).
+                    // Tap selects a point. Taps don't pan, so this never fights the ScrollView.
                     .onTapGesture { location in updateSelection(at: location, proxy: proxy, geo: geo) }
+                    // Scrubbing requires a brief press-and-hold first, so a normal vertical swipe
+                    // scrolls the page (the ScrollView wins) and only a deliberate hold starts the
+                    // horizontal scrubber. This fixes the "chart eats the scroll" bug.
+                    .gesture(
+                        LongPressGesture(minimumDuration: 0.12)
+                            .sequenced(before: DragGesture(minimumDistance: 0))
+                            .onChanged { value in
+                                if case .second(true, let drag?) = value {
+                                    updateSelection(at: drag.location, proxy: proxy, geo: geo)
+                                }
+                            }
+                    )
             }
         }
         .frame(height: height)

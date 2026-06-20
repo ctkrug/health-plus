@@ -134,8 +134,24 @@ and every `UserDefaults(suiteName:)` call. There's no single constant; grep for 
 - **Widget target** (`HealthAggregatorWidgets/`) can't import app code — `WorkoutActivityAttributes`
   and the `Color(hex:)` helper are **intentionally duplicated** there. Keep them in sync.
 - Tabs (`RootView`): Today (Dashboard) · Workout · Body · Recovery · Habits. Settings is a sheet
-  from the Dashboard gear icon. `NutritionView` exists but is **not** in the tab bar (orphaned;
-  nutrition shows via the dashboard card).
+  opened from a subtle gear **FAB (bottom-right)** on the Dashboard. `NutritionView` exists but is
+  **not** in the tab bar (orphaned; nutrition shows via the dashboard card).
+- **Header / chrome convention**: every tab uses `AppHeader` (logo + optional subtitle), `top`
+  `safeAreaInset`. **Never put a button in the top-right corner** — primary actions are bottom-right
+  FABs (`.fabStyle()`), refresh is pull-to-refresh, secondary actions live in-content.
+- **Theming**: all colors are adaptive light/dark tokens in `DesignSystem.swift` (`Color(light:dark:)`).
+  Appearance (System/Light/Dark) is a `@AppStorage("appearanceMode")` setting applied via
+  `.preferredColorScheme` in `HealthAggregatorApp`. Don't hardcode hex in views; add a token.
+- **Metric detail page** (`Views/Recovery/MetricDetailView.swift`): one unified page for inspecting
+  any metric over time, with a **metric dropdown** (switch field without leaving) and 1W/30D/90D/1Y.
+  Driven by `Models/MetricCatalog.swift` (`MetricSeries` + `MetricCatalog.all(hk:whoop:)`). Open it
+  anywhere with `MetricNavLink(metricID:) { … }` (inside a NavigationStack). Charts use the shared
+  `Views/Components/InteractiveTrendChart.swift` (hold-and-drag scrubber; press-then-drag so it
+  doesn't steal vertical scroll). Histories for the chart come from `HealthKitService` (~365 days).
+- **Workout tab** is intentionally minimal: a "TODAY" hero (active program's next workout) + a
+  "YOUR WORKOUTS" list of templates; tapping either opens `WorkoutPreviewView` (exercises + last-used
+  values) → **Start**. History/Programs/New are secondary buttons. Preview sessions are built without
+  starting via `WorkoutStore.previewProgramSession()` / `previewSession(for:)`; `begin(_:)` commits.
 
 ---
 

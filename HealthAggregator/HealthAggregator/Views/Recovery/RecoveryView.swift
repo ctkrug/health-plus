@@ -25,22 +25,12 @@ struct RecoveryView: View {
                     }
                     .padding(.top, 8)
                 }
+                .refreshable {
+                    if isConnected { await appState.whoopService.refresh() }
+                }
             }
             .safeAreaInset(edge: .top, spacing: 0) {
-                AppHeader {
-                    if isConnected {
-                        Button {
-                            Task { await appState.whoopService.refresh() }
-                        } label: {
-                            if appState.whoopService.isLoading {
-                                ProgressView().scaleEffect(0.8).tint(Color.textSecondary)
-                            } else {
-                                Image(systemName: "arrow.clockwise")
-                                    .foregroundStyle(Color.textSecondary)
-                            }
-                        }
-                    }
-                }
+                AppHeader()
             }
             .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showWhoopConnect) {
@@ -104,20 +94,9 @@ struct RecoveryView: View {
         .padding(.horizontal, 20)
         .padding(.top, 4)
 
-        // 2×2 tappable metric tiles
+        // 2×2 tappable metric tiles → unified metric detail page
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-            // HRV
-            NavigationLink {
-                MetricDetailView(
-                    title: "HRV",
-                    unit: "ms",
-                    icon: "waveform.path.ecg.rectangle.fill",
-                    color: .accentPurple,
-                    history: hk.hrvHistory,
-                    currentValue: whoop.hrv ?? (hk.hrvMssd > 0 ? hk.hrvMssd : nil),
-                    formatValue: { "\(Int($0))" }
-                )
-            } label: {
+            MetricNavLink(metricID: "hrv") {
                 MetricTile(
                     icon: "waveform.path.ecg.rectangle.fill",
                     label: "HRV",
@@ -127,20 +106,8 @@ struct RecoveryView: View {
                     sparkData: hk.hrvHistory.map(\.1)
                 )
             }
-            .buttonStyle(.plain)
 
-            // Resting HR
-            NavigationLink {
-                MetricDetailView(
-                    title: "Resting HR",
-                    unit: "bpm",
-                    icon: "heart.fill",
-                    color: .accentRed,
-                    history: hk.restingHRHistory,
-                    currentValue: whoop.restingHR ?? (hk.restingHR > 0 ? hk.restingHR : nil),
-                    formatValue: { "\(Int($0))" }
-                )
-            } label: {
+            MetricNavLink(metricID: "restinghr") {
                 MetricTile(
                     icon: "heart.fill",
                     label: "Resting HR",
@@ -150,20 +117,8 @@ struct RecoveryView: View {
                     sparkData: hk.restingHRHistory.map(\.1)
                 )
             }
-            .buttonStyle(.plain)
 
-            // Sleep
-            NavigationLink {
-                MetricDetailView(
-                    title: "Sleep",
-                    unit: "hrs",
-                    icon: "moon.zzz.fill",
-                    color: .accentBlue,
-                    history: hk.sleepHistory,
-                    currentValue: hk.sleepHours > 0 ? hk.sleepHours : nil,
-                    formatValue: { String(format: "%.1f", $0) }
-                )
-            } label: {
+            MetricNavLink(metricID: "sleep") {
                 MetricTile(
                     icon: "moon.zzz.fill",
                     label: "Sleep",
@@ -173,21 +128,8 @@ struct RecoveryView: View {
                     sparkData: hk.sleepHistory.map(\.1)
                 )
             }
-            .buttonStyle(.plain)
 
-            // Strain (WHOOP only, no history)
-            NavigationLink {
-                MetricDetailView(
-                    title: "Strain",
-                    unit: "/ 21",
-                    icon: "bolt.fill",
-                    color: .accentYellow,
-                    history: [],
-                    currentValue: whoop.strain,
-                    formatValue: { String(format: "%.1f", $0) },
-                    noDataMessage: "Strain history isn't available from the WHOOP API — only today's score is shown."
-                )
-            } label: {
+            MetricNavLink(metricID: "strain") {
                 MetricTile(
                     icon: "bolt.fill",
                     label: "Strain",
@@ -197,7 +139,6 @@ struct RecoveryView: View {
                     sparkData: []
                 )
             }
-            .buttonStyle(.plain)
         }
         .padding(.horizontal, 16)
 
@@ -261,17 +202,7 @@ struct RecoveryView: View {
                     Text("Apple Health HRV (no WHOOP score)")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(Color.textTertiary)
-                    NavigationLink {
-                        MetricDetailView(
-                            title: "HRV",
-                            unit: "ms",
-                            icon: "waveform.path.ecg.rectangle.fill",
-                            color: .accentPurple,
-                            history: hk.hrvHistory,
-                            currentValue: hk.hrvMssd > 0 ? hk.hrvMssd : nil,
-                            formatValue: { "\(Int($0))" }
-                        )
-                    } label: {
+                    MetricNavLink(metricID: "hrv") {
                         MetricTile(
                             icon: "waveform.path.ecg.rectangle.fill",
                             label: "HRV",
@@ -281,7 +212,6 @@ struct RecoveryView: View {
                             sparkData: hk.hrvHistory.map(\.1)
                         )
                     }
-                    .buttonStyle(.plain)
                     .padding(.horizontal, 20)
                 }
             }
@@ -373,32 +303,5 @@ struct MetricTile: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color.cardBorder, lineWidth: 0.5))
         .contentShape(Rectangle())
-    }
-}
-
-// Kept for backwards compat — still used in DashboardView
-struct RecoveryMetricCard: View {
-    let icon: String
-    let label: String
-    let value: String
-    let unit: String
-    let color: Color
-
-    var body: some View {
-        VStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.system(size: 24))
-                .foregroundStyle(color)
-            VStack(spacing: 2) {
-                HStack(alignment: .lastTextBaseline, spacing: 3) {
-                    Text(value).font(.metric(22)).foregroundStyle(Color.textPrimary)
-                    Text(unit).font(.metricLabel(11)).foregroundStyle(Color.textSecondary)
-                }
-                Text(label).font(.metricLabel(12)).foregroundStyle(Color.textSecondary)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 20)
-        .card()
     }
 }

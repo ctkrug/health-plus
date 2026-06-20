@@ -196,6 +196,44 @@ final class WorkoutStore {
         return session
     }
 
+    // MARK: - Preview (build a session without starting it, so it can be shown in a modal first)
+
+    /// Most recent completed weight/reps logged for an exercise — used to pre-fill "same as last time".
+    func lastValues(forExercise name: String) -> (weightKg: Double?, reps: Int?) {
+        for session in sessions.sorted(by: { $0.startDate > $1.startDate }) {
+            if let ex = session.exercises.first(where: { $0.name == name }),
+               let last = ex.completedSets.last {
+                return (last.weightKg, last.reps)
+            }
+        }
+        return (nil, nil)
+    }
+
+    /// A session built from a template, pre-filled with last-used values. Does NOT start the workout.
+    func previewSession(for template: WorkoutTemplate) -> WorkoutSession {
+        var session = template.toSession()
+        for i in session.exercises.indices {
+            let (w, r) = lastValues(forExercise: session.exercises[i].name)
+            for j in session.exercises[i].sets.indices {
+                if let w { session.exercises[i].sets[j].weightKg = w }
+                if let r { session.exercises[i].sets[j].reps = r }
+            }
+        }
+        return session
+    }
+
+    /// The active program's next workout, pre-populated with progression suggestions. Does NOT start it.
+    func previewProgramSession() -> WorkoutSession? {
+        guard let prog = activeProgram, let pw = prog.nextWorkout else { return nil }
+        return ProgressionEngine.populateSession(programWorkout: pw, history: sessions)
+    }
+
+    /// Commit a previewed session as the active workout (call right before presenting ActiveWorkoutView).
+    func begin(_ session: WorkoutSession) {
+        currentSession = session
+        isInWorkout = true
+    }
+
     /// Get a progression suggestion for an exercise in the current session
     func suggestion(for exerciseName: String, rule: ProgressionRule) -> ProgressionSuggestion {
         ProgressionEngine.suggestion(for: exerciseName, rule: rule, history: sessions)

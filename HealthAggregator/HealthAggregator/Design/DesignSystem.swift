@@ -233,8 +233,8 @@ struct AppHeader<Trailing: View>: View {
                 trailing()
             }
             .padding(.horizontal, 20)
-            .padding(.top, 14)
-            .padding(.bottom, subtitle != nil ? 4 : 14)
+            .padding(.top, 4)
+            .padding(.bottom, subtitle != nil ? 4 : 12)
 
             if let subtitle {
                 HStack {
@@ -259,6 +259,22 @@ extension AppHeader where Trailing == EmptyView {
     init(subtitle: String? = nil) {
         self.subtitle = subtitle
         self.trailing = { EmptyView() }
+    }
+}
+
+// MARK: - Floating action button style
+// Primary actions live bottom-trailing (never in the top-right corner of the app).
+extension View {
+    /// Style an icon as a circular floating button.
+    func fabStyle(primary: Bool = true, diameter: CGFloat = 56) -> some View {
+        self
+            .font(.system(size: primary ? 22 : 18, weight: .semibold))
+            .foregroundStyle(primary ? Color.white : Color.textSecondary)
+            .frame(width: diameter, height: diameter)
+            .background(primary ? Color.accentBlue : Color.cardBackground)
+            .clipShape(Circle())
+            .overlay(Circle().strokeBorder(primary ? Color.clear : Color.cardBorder, lineWidth: 0.5))
+            .shadow(color: .black.opacity(primary ? 0.18 : 0.12), radius: 7, y: 2)
     }
 }
 

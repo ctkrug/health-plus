@@ -65,8 +65,8 @@ struct HabitsView: View {
                 }
             }
             .animation(.spring(response: 0.4, dampingFraction: 0.75), value: store.pendingMilestone)
-            .safeAreaInset(edge: .top, spacing: 0) {
-                AppHeader {
+            .overlay(alignment: .bottomTrailing) {
+                if !store.habits.isEmpty {
                     Menu {
                         Button { showLibrary = true } label: {
                             Label("Browse Library", systemImage: "square.grid.2x2.fill")
@@ -80,10 +80,14 @@ struct HabitsView: View {
                             }
                         }
                     } label: {
-                        Image(systemName: "plus")
-                            .foregroundStyle(Color.accentBlue)
+                        Image(systemName: "plus").fabStyle()
                     }
+                    .padding(.trailing, 16)
+                    .padding(.bottom, 14)
                 }
+            }
+            .safeAreaInset(edge: .top, spacing: 0) {
+                AppHeader()
             }
             .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showSetupChat) { HabitSetupChatView() }

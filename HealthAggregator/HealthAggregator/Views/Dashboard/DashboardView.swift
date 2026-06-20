@@ -2,9 +2,7 @@ import SwiftUI
 
 struct DashboardView: View {
     @Environment(AppState.self) var appState
-    @State private var isRefreshing = false
     @State private var showSettings = false
-    @State private var editMode = false
     @AppStorage("dashboardCardOrder") private var cardOrderData: Data = (try? JSONEncoder().encode(DashboardCard.defaultOrder)) ?? Data()
     @State private var cardOrder: [DashboardCard] = DashboardCard.defaultOrder
 
@@ -19,26 +17,24 @@ struct DashboardView: View {
                             cardView(for: card)
                                 .padding(.horizontal, 16)
                         }
-                        Spacer().frame(height: 20)
+                        Spacer().frame(height: 80)
                     }
                     .padding(.top, 8)
                 }
                 .refreshable {
-                    isRefreshing = true
                     await appState.healthKitService.refresh()
                     await appState.whoopService.refresh()
-                    isRefreshing = false
                 }
             }
-            .safeAreaInset(edge: .top, spacing: 0) {
-                AppHeader(subtitle: Date.now.formatted(.dateTime.weekday(.wide).month().day())) {
-                    Button {
-                        showSettings = true
-                    } label: {
-                        Image(systemName: "gearshape.fill")
-                            .foregroundStyle(Color.textSecondary)
-                    }
+            .overlay(alignment: .bottomTrailing) {
+                Button { showSettings = true } label: {
+                    Image(systemName: "gearshape.fill").fabStyle(primary: false, diameter: 46)
                 }
+                .padding(.trailing, 16)
+                .padding(.bottom, 14)
+            }
+            .safeAreaInset(edge: .top, spacing: 0) {
+                AppHeader(subtitle: Date.now.formatted(.dateTime.weekday(.wide).month().day()))
             }
             .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showSettings) {
@@ -64,13 +60,13 @@ struct DashboardView: View {
         case .activity:
             ActivityRingsCard(hk: appState.healthKitService)
         case .body:
-            BodySnapshotCard(hk: appState.healthKitService)
+            MetricNavLink(metricID: "weight") { BodySnapshotCard(hk: appState.healthKitService) }
         case .nutrition:
-            NutritionCard(hk: appState.healthKitService)
+            MetricNavLink(metricID: "calories") { NutritionCard(hk: appState.healthKitService) }
         case .sleep:
-            SleepCard(hk: appState.healthKitService, whoop: appState.whoopService.snapshot)
+            MetricNavLink(metricID: "sleep") { SleepCard(hk: appState.healthKitService, whoop: appState.whoopService.snapshot) }
         case .steps:
-            StepsCard(hk: appState.healthKitService)
+            MetricNavLink(metricID: "steps") { StepsCard(hk: appState.healthKitService) }
         case .workout:
             TodayWorkoutCard(store: appState.workoutStore)
         }

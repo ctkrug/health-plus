@@ -46,11 +46,17 @@ struct BodyCompositionView: View {
                 Color.appBackground.ignoresSafeArea()
                 ScrollView {
                     VStack(spacing: 16) {
-                        // Top metrics
+                        // Top metrics — tap any to open its dedicated trend page
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12) {
-                            BodyMetricCard(label: "Weight", value: currentWeightLbs > 0 ? String(format: "%.1f", currentWeightLbs) : "—", unit: "lb", color: .accentBlue)
-                            BodyMetricCard(label: "Body Fat", value: bodyFatPct > 0 ? String(format: "%.1f", bodyFatPct) : "—", unit: "%", color: .accentOrange)
-                            BodyMetricCard(label: "Lean Mass", value: leanMassLbs > 0 ? String(format: "%.1f", leanMassLbs) : "—", unit: "lb", color: .accentGreen)
+                            MetricNavLink(metricID: "weight") {
+                                BodyMetricCard(label: "Weight", value: currentWeightLbs > 0 ? String(format: "%.1f", currentWeightLbs) : "—", unit: "lb", color: .accentBlue)
+                            }
+                            MetricNavLink(metricID: "bodyfat") {
+                                BodyMetricCard(label: "Body Fat", value: bodyFatPct > 0 ? String(format: "%.1f", bodyFatPct) : "—", unit: "%", color: .accentOrange)
+                            }
+                            MetricNavLink(metricID: "leanmass") {
+                                BodyMetricCard(label: "Lean Mass", value: leanMassLbs > 0 ? String(format: "%.1f", leanMassLbs) : "—", unit: "lb", color: .accentGreen)
+                            }
                         }
                         .padding(.horizontal, 16)
 

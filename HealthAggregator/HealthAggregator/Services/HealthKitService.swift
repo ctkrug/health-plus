@@ -47,12 +47,15 @@ final class HealthKitService {
     var weeklyExerciseMinutes: Double = 0   // last 7 days, Apple exercise time
 
     var stepsHistory: [Double] = []     // last 7 days (undated, for sparklines)
-    var stepsHistoryDated: [(Date, Double)] = []  // last 30 days with dates
+    // Dated histories span ~1 year so the metric detail page can show 1W / 30D / 90D / 1Y.
+    var stepsHistoryDated: [(Date, Double)] = []
     var weightHistory: [(Date, Double)] = []
     var bodyFatHistory: [(Date, Double)] = []
+    var leanMassHistory: [(Date, Double)] = []
     var hrvHistory: [(Date, Double)] = []
     var restingHRHistory: [(Date, Double)] = []
-    var sleepHistory: [(Date, Double)] = []   // nightly totals (hours asleep)
+    var sleepHistory: [(Date, Double)] = []     // nightly totals (hours asleep)
+    var caloriesHistory: [(Date, Double)] = []  // daily calories consumed
 
     var isAuthorized = false
     var isLoading = false
@@ -115,9 +118,11 @@ final class HealthKitService {
             group.addTask { await self.fetchStepsHistoryDated() }
             group.addTask { await self.fetchWeightHistory() }
             group.addTask { await self.fetchBodyFatHistory() }
+            group.addTask { await self.fetchLeanMassHistory() }
             group.addTask { await self.fetchHRVHistory() }
             group.addTask { await self.fetchRestingHRHistory() }
             group.addTask { await self.fetchSleepHistory() }
+            group.addTask { await self.fetchCaloriesHistory() }
             group.addTask { await self.fetchProfile() }
             group.addTask { await self.fetchVO2Max() }
             group.addTask { await self.fetchWeeklyExerciseMinutes() }
@@ -346,7 +351,7 @@ final class HealthKitService {
 
     private func fetchWeightHistory() async {
         guard let type = HKQuantityType.quantityType(forIdentifier: .bodyMass) else { return }
-        let start = Calendar.current.date(byAdding: .day, value: -90, to: Date())!
+        let start = Calendar.current.date(byAdding: .day, value: -365, to: Date())!
         let predicate = HKQuery.predicateForSamples(withStart: start, end: Date())
         let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
 
@@ -386,7 +391,7 @@ final class HealthKitService {
 
     private func fetchHRVHistory() async {
         guard let type = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN) else { return }
-        let start = Calendar.current.date(byAdding: .day, value: -30, to: Date())!
+        let start = Calendar.current.date(byAdding: .day, value: -365, to: Date())!
         let predicate = HKQuery.predicateForSamples(withStart: start, end: Date())
         let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
 
@@ -408,7 +413,7 @@ final class HealthKitService {
         guard let type = HKQuantityType.quantityType(forIdentifier: .stepCount) else { return }
         let now = Date()
         let cal = Calendar.current
-        let start = cal.date(byAdding: .day, value: -30, to: cal.startOfDay(for: now))!
+        let start = cal.date(byAdding: .day, value: -365, to: cal.startOfDay(for: now))!
         var comps = DateComponents(); comps.day = 1
 
         return await withCheckedContinuation { continuation in
@@ -436,7 +441,7 @@ final class HealthKitService {
 
     private func fetchRestingHRHistory() async {
         guard let type = HKQuantityType.quantityType(forIdentifier: .restingHeartRate) else { return }
-        let start = Calendar.current.date(byAdding: .day, value: -90, to: Date())!
+        let start = Calendar.current.date(byAdding: .day, value: -365, to: Date())!
         let predicate = HKQuery.predicateForSamples(withStart: start, end: Date())
         let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
 
@@ -456,7 +461,7 @@ final class HealthKitService {
 
     private func fetchSleepHistory() async {
         guard let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else { return }
-        let start = Calendar.current.date(byAdding: .day, value: -90, to: Date())!
+        let start = Calendar.current.date(byAdding: .day, value: -365, to: Date())!
         let predicate = HKQuery.predicateForSamples(withStart: start, end: Date())
 
         return await withCheckedContinuation { continuation in
@@ -472,6 +477,57 @@ final class HealthKitService {
                 }
                 let sorted = byDay.sorted { $0.key < $1.key }.map { ($0.key, $0.value) }
                 Task { @MainActor in self.sleepHistory = sorted; continuation.resume() }
+            }
+            store.execute(query)
+        }
+    }
+
+    private func fetchLeanMassHistory() async {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .leanBodyMass) else { return }
+        let start = Calendar.current.date(byAdding: .day, value: -365, to: Date())!
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: Date())
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sort]) { [weak self] _, samples, _ in
+                guard let self else { continuation.resume(); return }
+                let unit = HKUnit.gramUnit(with: .kilo)
+                let data = (samples as? [HKQuantitySample] ?? []).compactMap { s -> (Date, Double)? in
+                    guard s.quantity.is(compatibleWith: unit) else { return nil }
+                    return (s.startDate, s.quantity.doubleValue(for: unit))
+                }
+                Task { @MainActor in self.leanMassHistory = data; continuation.resume() }
+            }
+            store.execute(query)
+        }
+    }
+
+    private func fetchCaloriesHistory() async {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .dietaryEnergyConsumed) else { return }
+        let now = Date()
+        let cal = Calendar.current
+        let start = cal.date(byAdding: .day, value: -365, to: cal.startOfDay(for: now))!
+        var comps = DateComponents(); comps.day = 1
+
+        return await withCheckedContinuation { continuation in
+            let query = HKStatisticsCollectionQuery(
+                quantityType: type,
+                quantitySamplePredicate: HKQuery.predicateForSamples(withStart: start, end: now),
+                options: .cumulativeSum,
+                anchorDate: cal.startOfDay(for: now),
+                intervalComponents: comps
+            )
+            query.initialResultsHandler = { [weak self] _, result, _ in
+                guard let self, let result else { continuation.resume(); return }
+                var data: [(Date, Double)] = []
+                let unit = HKUnit.kilocalorie()
+                result.enumerateStatistics(from: start, to: now) { stats, _ in
+                    if let sum = stats.sumQuantity(), sum.is(compatibleWith: unit) {
+                        let v = sum.doubleValue(for: unit)
+                        if v > 0 { data.append((stats.startDate, v)) }   // skip empty (un-logged) days
+                    }
+                }
+                Task { @MainActor in self.caloriesHistory = data; continuation.resume() }
             }
             store.execute(query)
         }
