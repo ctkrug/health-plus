@@ -19,6 +19,9 @@ struct SettingsView: View {
     @AppStorage("workoutReminderHour") private var storedReminderHour = 7
     @AppStorage("workoutReminderMinute") private var storedReminderMinute = 0
     @AppStorage("appearanceMode") private var appearanceMode = AppAppearance.system.rawValue
+    @AppStorage("defaultSets") private var defaultSets = 3
+    @AppStorage("defaultMinReps") private var defaultMinReps = 8
+    @AppStorage("defaultMaxReps") private var defaultMaxReps = 12
 
     var body: some View {
         NavigationStack {
@@ -161,6 +164,46 @@ struct SettingsView: View {
                             .foregroundStyle(Color.textPrimary)
                             .listRowBackground(Color.cardBackground)
                         }
+                    }
+
+                    // Workout defaults
+                    Section("Workout Defaults") {
+                        HStack {
+                            Text("Default Sets")
+                                .foregroundStyle(Color.textPrimary)
+                            Spacer()
+                            Stepper("\(defaultSets)", value: $defaultSets, in: 1...6)
+                                .fixedSize()
+                                .foregroundStyle(Color.textPrimary)
+                        }
+                        .listRowBackground(Color.cardBackground)
+
+                        HStack {
+                            Text("Rep Range")
+                                .foregroundStyle(Color.textPrimary)
+                            Spacer()
+                            HStack(spacing: 4) {
+                                Stepper("", value: $defaultMinReps, in: 1...50)
+                                    .labelsHidden()
+                                    .fixedSize()
+                                Text("\(defaultMinReps)–\(defaultMaxReps)")
+                                    .foregroundStyle(Color.accentBlue)
+                                    .font(.system(size: 15, weight: .medium))
+                                    .frame(minWidth: 56, alignment: .center)
+                                Stepper("", value: $defaultMaxReps, in: 1...50)
+                                    .labelsHidden()
+                                    .fixedSize()
+                            }
+                        }
+                        .listRowBackground(Color.cardBackground)
+
+                        Button(role: .destructive) {
+                            appState.workoutStore.resetToUserWorkouts()
+                        } label: {
+                            Label("Reset to My Workouts (A/B/C)", systemImage: "arrow.counterclockwise")
+                                .font(.system(size: 14))
+                        }
+                        .listRowBackground(Color.cardBackground)
                     }
 
                     // Units

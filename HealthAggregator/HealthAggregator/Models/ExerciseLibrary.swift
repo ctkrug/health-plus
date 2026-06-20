@@ -207,6 +207,60 @@ enum ExerciseLibrary {
         }
     }
 
+    // MARK: - User's personal A/B/C templates
+
+    private static func te(_ name: String, sets: Int = 3, minReps: Int = 8, maxReps: Int = 12, lbs: Double? = nil) -> TemplateExercise {
+        TemplateExercise(
+            name: name,
+            orderIndex: 0,
+            defaultSets: sets,
+            defaultReps: minReps,
+            maxReps: maxReps,
+            defaultWeightKg: lbs.map { $0 * 0.453592 },
+            defaultWeightUnit: .lbs
+        )
+    }
+
+    static var userABCTemplates: [WorkoutTemplate] {
+        var a = WorkoutTemplate(name: "Workout A", type: .upper)
+        a.exercises = [
+            te("Bench Press", lbs: 30),
+            te("Overhead Press", lbs: 20),
+            te("Bicep Curls", lbs: 20),
+            te("Tricep Overhead Extension", lbs: 30),
+            te("Rear Delt Flies"),
+            te("Lateral Raises", lbs: 15),
+            te("Calf Raises", minReps: 12, maxReps: 20),
+            te("Dumbbell Rows", lbs: 30),
+        ].enumerated().map { i, ex in var e = ex; e.orderIndex = i; return e }
+
+        var b = WorkoutTemplate(name: "Workout B", type: .upper)
+        b.exercises = [
+            te("Overhead Press", lbs: 15),
+            te("Dumbbell Rows", lbs: 20),
+            te("Incline Bench Press", lbs: 20),
+            te("Hammer Curl", lbs: 20),
+            te("Tricep Extension", lbs: 10),
+            te("Rear Delt Flies", lbs: 10),
+            te("Lateral Raises", minReps: 12, maxReps: 20),
+            te("Lunges", minReps: 8, maxReps: 12),
+            te("Squat", lbs: 30),
+            te("Calf Raises", sets: 3, minReps: 15, maxReps: 20, lbs: 25),
+        ].enumerated().map { i, ex in var e = ex; e.orderIndex = i; return e }
+
+        var c = WorkoutTemplate(name: "Workout C — Machines", type: .fullBody)
+        c.exercises = [
+            te("Chest Press Machine", lbs: 50),
+            te("Lat Pulldown Machine", minReps: 8, maxReps: 12, lbs: 80),
+            te("Shoulder Press Machine", lbs: 40),
+            te("Bicep Curls Machine", lbs: 65),
+            te("Tricep Press Machine", lbs: 85),
+            te("Rowing Machine", lbs: 80),
+        ].enumerated().map { i, ex in var e = ex; e.orderIndex = i; return e }
+
+        return [a, b, c]
+    }
+
     // MARK: - Search
 
     static func search(_ query: String) -> [ExerciseDefinition] {

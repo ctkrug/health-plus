@@ -23,6 +23,7 @@ final class WorkoutStore {
         loadFromDisk()
         if templates.isEmpty { seedDefaultTemplates() }
         if programs.isEmpty { seedBuiltInPrograms() }
+        if !UserDefaults.standard.bool(forKey: "myWorkoutsV1") { migrateToUserWorkouts() }
     }
 
     // MARK: - Core Data Model (programmatic, no .xcdatamodeld needed)
@@ -445,6 +446,24 @@ final class WorkoutStore {
         let defaults = ExerciseLibrary.defaultTemplates
         defaults.forEach { saveTemplate($0) }
         templates = defaults  // same instances — UUIDs match what was saved to disk
+    }
+
+    /// Replace all seeded templates with the user's personal A/B/C workouts.
+    /// Runs once, gated by a UserDefaults flag so manual edits are never clobbered again.
+    private func migrateToUserWorkouts() {
+        templates.forEach { deleteTemplateFromDisk($0.id) }
+        let userTemplates = ExerciseLibrary.userABCTemplates
+        userTemplates.forEach { saveTemplate($0) }
+        templates = userTemplates
+        UserDefaults.standard.set(true, forKey: "myWorkoutsV1")
+    }
+
+    /// Replace all templates with user's A/B/C (can be triggered from Settings after edits).
+    func resetToUserWorkouts() {
+        templates.forEach { deleteTemplateFromDisk($0.id) }
+        let userTemplates = ExerciseLibrary.userABCTemplates
+        userTemplates.forEach { saveTemplate($0) }
+        templates = userTemplates
     }
 
     private func seedBuiltInPrograms() {

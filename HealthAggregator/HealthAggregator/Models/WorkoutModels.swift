@@ -160,7 +160,7 @@ struct WorkoutTemplate: Identifiable, Codable {
                     weightKg: te.defaultWeightKg,
                     weightUnit: te.defaultWeightUnit,
                     reps: te.defaultReps,
-                    targetReps: te.defaultReps,
+                    targetReps: te.maxReps ?? te.defaultReps,
                     targetWeightKg: te.defaultWeightKg
                 )
             }
@@ -176,6 +176,7 @@ struct TemplateExercise: Identifiable, Codable {
     var orderIndex: Int
     var defaultSets: Int = 3
     var defaultReps: Int? = 8
+    var maxReps: Int? = nil        // upper end of rep range (e.g. 12 in "8–12"); nil = exact reps
     var defaultWeightKg: Double? = nil
     var defaultWeightUnit: WeightUnit = .lbs
     var restSeconds: Int = 90

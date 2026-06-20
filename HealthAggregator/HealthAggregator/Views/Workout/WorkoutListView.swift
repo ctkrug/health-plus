@@ -6,6 +6,7 @@ struct WorkoutListView: View {
     @State private var showCustomBuilder = false
     @State private var showPrograms = false
     @State private var preview: WorkoutPreviewItem? = nil
+    @State private var editingTemplate: WorkoutTemplate? = nil
 
     var store: WorkoutStore { appState.workoutStore }
 
@@ -51,7 +52,8 @@ struct WorkoutListView: View {
                                         WorkoutOptionRow(
                                             name: template.name,
                                             icon: template.type.icon,
-                                            detail: "\(template.exercises.count) exercises"
+                                            detail: "\(template.exercises.count) exercises",
+                                            onEdit: { editingTemplate = template }
                                         ) {
                                             preview = WorkoutPreviewItem(
                                                 title: template.name,
@@ -86,6 +88,7 @@ struct WorkoutListView: View {
             .sheet(isPresented: $showCustomBuilder) { CustomWorkoutBuilderView() }
             .sheet(isPresented: $showPrograms) { ProgramView() }
             .sheet(item: $preview) { item in WorkoutPreviewView(item: item) }
+            .sheet(item: $editingTemplate) { template in TemplateEditorView(template: template) }
         }
     }
 
@@ -156,36 +159,54 @@ struct WorkoutOptionRow: View {
     let name: String
     let icon: String
     let detail: String
+    var onEdit: (() -> Void)? = nil
     let onTap: () -> Void
 
     var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 14) {
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color.accentBlue)
-                    .frame(width: 40, height: 40)
-                    .background(Color.accentBlue.opacity(0.12))
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(name)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(Color.textPrimary)
-                    Text(detail)
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color.textSecondary)
+        HStack(spacing: 0) {
+            Button(action: onTap) {
+                HStack(spacing: 14) {
+                    Image(systemName: icon)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(Color.accentBlue)
+                        .frame(width: 40, height: 40)
+                        .background(Color.accentBlue.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(name)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(Color.textPrimary)
+                        Text(detail)
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Color.textTertiary)
                 }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Color.textTertiary)
+                .padding(14)
             }
-            .padding(14)
-            .background(Color.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.cardBorder, lineWidth: 0.5))
+            .buttonStyle(.plain)
+
+            if let onEdit {
+                Rectangle()
+                    .fill(Color.cardBorder)
+                    .frame(width: 0.5)
+                    .padding(.vertical, 10)
+                Button(action: onEdit) {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(Color.textSecondary)
+                        .frame(width: 48)
+                        .frame(maxHeight: .infinity)
+                }
+                .buttonStyle(.plain)
+            }
         }
-        .buttonStyle(.plain)
+        .background(Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.cardBorder, lineWidth: 0.5))
     }
 }
 
@@ -291,11 +312,21 @@ struct WorkoutPreviewView: View {
         }
     }
 
-    /// "3 sets · 5 reps · 135 lb" (weight shown only when it's a loaded exercise).
+    /// "3 sets · 8–12 reps · 30 lb" (rep range shown when target > logged reps).
     private func setSummary(_ ex: WorkoutExercise) -> String {
         let sets = ex.sets.count
         var parts = ["\(sets) set\(sets == 1 ? "" : "s")"]
-        if let reps = ex.sets.first?.reps { parts.append("\(reps) reps") }
+        if let first = ex.sets.first {
+            let logged = first.reps
+            let target = first.targetReps
+            if let l = logged, let t = target, t > l {
+                parts.append("\(l)–\(t) reps")
+            } else if let r = logged {
+                parts.append("\(r) reps")
+            } else if let t = target {
+                parts.append("\(t) reps")
+            }
+        }
         if let w = ex.sets.first?.weightKg, w > 0 {
             parts.append("\(Int((w / 0.453592).rounded())) lb")
         }
