@@ -204,17 +204,18 @@ struct TemplateExercise: Identifiable, Codable {
             || n.contains("leg press") || n.contains("leg extension") || n.contains("leg curl") {
             eq = .machine
             progressionKg = 4.536  // 10 lbs
-        } else if n.contains("barbell") || (n.contains("deadlift") && !n.contains("dumbbell"))
-                   || (n.contains("squat") && !n.contains("goblet") && !n.contains("dumbbell")) {
+        } else if n.contains("barbell") {
+            // Only classify as barbell when explicitly named — user's A/B/C are all dumbbell
             eq = .barbell
             progressionKg = 2.268  // 5 lbs (2.5 lb plate each side)
         } else {
             eq = .dumbbell
-            // Bilateral: both hands push/pull simultaneously → 5 lb per dumbbell = +10 total
+            // Bilateral: both hands hold a dumbbell simultaneously → 5 lb per dumbbell = +10 total
             let isBilateral = n.contains("bench press") || n.contains("incline bench")
                 || n.contains("overhead press") || n.contains("shoulder press")
                 || n.contains("arnold press") || n.contains("push press")
-                || n.contains("goblet squat") || n.contains("chest fly")
+                || n.contains("squat") || n.contains("lunge")
+                || n.contains("goblet") || n.contains("chest fly")
             progressionKg = isBilateral ? 4.536 : 2.268
         }
 
