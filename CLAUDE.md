@@ -172,6 +172,10 @@ and every `UserDefaults(suiteName:)` call. There's no single constant; grep for 
      `input_schema` (defined in `HabitSetupParser.inputSchema`), so it's guaranteed-valid structure —
      no fenced-JSON guessing. Triggered deterministically by the **Done button** or a local end-intent
      phrase (`looksLikeDone`), never by the model deciding it's finished.
+     **Gotcha:** forced tool use returns 400 *"conversation must end with a user message"* if the
+     messages array ends on an assistant turn (which it does when the user taps Done right after the
+     coach's question). So the extraction passes the whole chat as a **single user-role message**
+     (a formatted `User:/Coach:` transcript), never the replayed multi-turn history.
   `HabitSetupParser.buildHabits(from:)` maps the tool input → `[Habit]`; the legacy text path
   (`parseHabits(from:)` + `sanitizedReply`) is kept only as a belt-and-braces fallback.
 - **Renpho / MyFitnessPal / Swim.com** — no direct API; they sync into Apple Health, and the app
