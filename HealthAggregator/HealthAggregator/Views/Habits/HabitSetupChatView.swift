@@ -233,10 +233,21 @@ struct HabitSetupChatView: View {
         isFinishing = true
         Task {
             do {
+                // Pass the whole chat as ONE user message. Replaying the multi-turn history would
+                // often end on an assistant turn (e.g. when the user taps Done right after the coach's
+                // question), and forced tool use rejects that with 400 "conversation must end with a
+                // user message." A single user-role transcript always ends correctly.
+                let transcript = conversationHistory
+                    .map { "\($0.role == "user" ? "User" : "Coach"): \($0.content)" }
+                    .joined(separator: "\n")
+                let extractionMessages = [ClaudeMessage(
+                    role: "user",
+                    content: "Here is the full habit-setup conversation:\n\n\(transcript)\n\nExtract every habit the user wants to track and save them.")]
+
                 let input = try await ClaudeService.shared.runTool(
                     model: ClaudeService.extractionModel,
                     system: extractionSystemPrompt,
-                    messages: conversationHistory,
+                    messages: extractionMessages,
                     toolName: HabitSetupParser.toolName,
                     toolDescription: HabitSetupParser.toolDescription,
                     inputSchema: HabitSetupParser.inputSchema
