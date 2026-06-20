@@ -73,7 +73,9 @@ final class HealthKitService {
         var types: Set<HKObjectType> = Set(quantityTypes.compactMap { HKObjectType.quantityType(forIdentifier: $0) })
         types.insert(HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!)
         if let sh = HKObjectType.categoryType(forIdentifier: .appleStandHour) { types.insert(sh) }
-        types.insert(HKObjectType.activitySummaryType())
+        // Note: activitySummaryType is intentionally omitted — HKActivitySummaryQuery throws
+        // an uncatchable ObjC exception on iOS 26. We use individual HKStatisticsQuery /
+        // HKSampleQuery calls instead and don't need the activity-summary permission.
         types.insert(HKObjectType.workoutType())
         if let sex = HKObjectType.characteristicType(forIdentifier: .biologicalSex) { types.insert(sex) }
         if let dob = HKObjectType.characteristicType(forIdentifier: .dateOfBirth) { types.insert(dob) }
@@ -603,7 +605,10 @@ final class HealthKitService {
         let predicate = HKQuery.predicateForSamples(withStart: start, end: end)
 
         return await withCheckedContinuation { continuation in
-            let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { [self] _, stats, _ in
+            let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { [self] _, stats, error in
+                if error != nil || stats == nil {
+                    continuation.resume(returning: 0); return
+                }
                 guard let sum = stats?.sumQuantity() else { continuation.resume(returning: 0); return }
                 continuation.resume(returning: self.safeDouble(sum, unit: unit))
             }
@@ -617,7 +622,10 @@ final class HealthKitService {
         let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
 
         return await withCheckedContinuation { continuation in
-            let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: 1, sortDescriptors: [sort]) { [self] _, samples, _ in
+            let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: 1, sortDescriptors: [sort]) { [self] _, samples, error in
+                if error != nil {
+                    continuation.resume(returning: 0); return
+                }
                 guard let q = (samples as? [HKQuantitySample])?.first?.quantity else {
                     continuation.resume(returning: 0); return
                 }
