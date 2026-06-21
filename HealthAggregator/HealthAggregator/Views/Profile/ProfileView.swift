@@ -1,16 +1,27 @@
 import SwiftUI
 
-struct SettingsView: View {
+/// Combined Profile + Settings hub. Opened from the avatar in the Home (Today) header.
+/// Shows who you are + quick stats up top, then every app setting below
+/// (appearance, integrations, goals, notifications, workout defaults, units, account).
+struct ProfileView: View {
     @Environment(AppState.self) var appState
     @Environment(\.dismiss) var dismiss
-    @State private var workoutReminderEnabled = false
-    @State private var workoutReminderHour = 7
-    @State private var workoutReminderMinute = 0
-    // workoutReminderMinute @State is synced from/to storedReminderMinute
+
+    // Profile
+    @AppStorage("profileEmoji") private var profileEmoji = "💪"
+    @State private var nameDraft = ""
+    @State private var isEditingName = false
+
+    // Goals (mirrored to storage)
     @State private var calorieGoal = "2500"
     @State private var proteinGoal = "180"
     @State private var stepGoal = "10000"
+    // Notifications
+    @State private var workoutReminderEnabled = false
+    @State private var workoutReminderHour = 7
+    @State private var workoutReminderMinute = 0
     @State private var showWhoopConnect = false
+
     @AppStorage("calorieGoal") private var storedCalorieGoal = 2500.0
     @AppStorage("stepGoal") private var storedStepGoal = 10000.0
     @AppStorage("weightUnit") private var storedWeightUnit = "lbs"
@@ -22,12 +33,25 @@ struct SettingsView: View {
     @AppStorage("defaultSets") private var defaultSets = 3
     @AppStorage("defaultMinReps") private var defaultMinReps = 8
     @AppStorage("defaultMaxReps") private var defaultMaxReps = 12
+    @AppStorage("defaultRestSeconds") private var defaultRestSeconds = 180
+
+    private let emojiChoices = ["💪", "🏋️", "🔥", "⚡️", "🏃", "🧘", "🦾", "🥇", "😤", "🦍", "🐺", "🚀"]
+
+    private var store: WorkoutStore { appState.workoutStore }
+    private var auth: AuthService { appState.authService }
+
+    private var profileName: String {
+        auth.displayName.isEmpty ? "Athlete" : auth.displayName
+    }
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.appBackground.ignoresSafeArea()
                 List {
+                    profileSection
+                    statsSection
+
                     // Appearance
                     Section("Appearance") {
                         Picker(selection: $appearanceMode) {
@@ -42,7 +66,7 @@ struct SettingsView: View {
                         .listRowBackground(Color.cardBackground)
                     }
 
-                    // WHOOP
+                    // Integrations
                     Section("Integrations") {
                         HStack {
                             Circle()
@@ -85,50 +109,15 @@ struct SettingsView: View {
 
                     // Daily goals
                     Section("Daily Goals") {
-                        HStack {
-                            Text("Step Goal")
-                                .foregroundStyle(Color.textPrimary)
-                            Spacer()
-                            TextField("steps", text: $stepGoal)
-                                .keyboardType(.numberPad)
-                                .multilineTextAlignment(.trailing)
-                                .foregroundStyle(Color.accentBlue)
-                                .frame(width: 80)
-                                .onChange(of: stepGoal) { _, v in
-                                    if let d = Double(v) { storedStepGoal = d }
-                                }
+                        goalRow(label: "Step Goal", text: $stepGoal, placeholder: "steps") {
+                            if let d = Double($0) { storedStepGoal = d }
                         }
-                        .listRowBackground(Color.cardBackground)
-
-                        HStack {
-                            Text("Calorie Goal")
-                                .foregroundStyle(Color.textPrimary)
-                            Spacer()
-                            TextField("kcal", text: $calorieGoal)
-                                .keyboardType(.numberPad)
-                                .multilineTextAlignment(.trailing)
-                                .foregroundStyle(Color.accentBlue)
-                                .frame(width: 80)
-                                .onChange(of: calorieGoal) { _, v in
-                                    if let d = Double(v) { storedCalorieGoal = d }
-                                }
+                        goalRow(label: "Calorie Goal", text: $calorieGoal, placeholder: "kcal") {
+                            if let d = Double($0) { storedCalorieGoal = d }
                         }
-                        .listRowBackground(Color.cardBackground)
-
-                        HStack {
-                            Text("Protein Goal")
-                                .foregroundStyle(Color.textPrimary)
-                            Spacer()
-                            TextField("grams", text: $proteinGoal)
-                                .keyboardType(.numberPad)
-                                .multilineTextAlignment(.trailing)
-                                .foregroundStyle(Color.accentBlue)
-                                .frame(width: 80)
-                                .onChange(of: proteinGoal) { _, v in
-                                    if let d = Double(v) { storedProteinGoal = d }
-                                }
+                        goalRow(label: "Protein Goal", text: $proteinGoal, placeholder: "grams") {
+                            if let d = Double($0) { storedProteinGoal = d }
                         }
-                        .listRowBackground(Color.cardBackground)
                     }
 
                     // Notifications
@@ -155,9 +144,7 @@ struct SettingsView: View {
                                             workoutReminderMinute = Calendar.current.component(.minute, from: d)
                                             storedReminderHour = workoutReminderHour
                                             storedReminderMinute = workoutReminderMinute
-                                            if workoutReminderEnabled {
-                                                appState.notificationService.scheduleWorkoutReminder(hour: workoutReminderHour, minute: workoutReminderMinute)
-                                            }
+                                            appState.notificationService.scheduleWorkoutReminder(hour: workoutReminderHour, minute: workoutReminderMinute)
                                         }
                                        ),
                                        displayedComponents: .hourAndMinute)
@@ -169,8 +156,7 @@ struct SettingsView: View {
                     // Workout defaults
                     Section("Workout Defaults") {
                         HStack {
-                            Text("Default Sets")
-                                .foregroundStyle(Color.textPrimary)
+                            Text("Default Sets").foregroundStyle(Color.textPrimary)
                             Spacer()
                             Stepper("\(defaultSets)", value: $defaultSets, in: 1...6)
                                 .fixedSize()
@@ -179,26 +165,37 @@ struct SettingsView: View {
                         .listRowBackground(Color.cardBackground)
 
                         HStack {
-                            Text("Rep Range")
-                                .foregroundStyle(Color.textPrimary)
+                            Text("Rep Range").foregroundStyle(Color.textPrimary)
                             Spacer()
                             HStack(spacing: 4) {
                                 Stepper("", value: $defaultMinReps, in: 1...50)
-                                    .labelsHidden()
-                                    .fixedSize()
+                                    .labelsHidden().fixedSize()
                                 Text("\(defaultMinReps)–\(defaultMaxReps)")
                                     .foregroundStyle(Color.accentBlue)
                                     .font(.system(size: 15, weight: .medium))
                                     .frame(minWidth: 56, alignment: .center)
                                 Stepper("", value: $defaultMaxReps, in: 1...50)
-                                    .labelsHidden()
-                                    .fixedSize()
+                                    .labelsHidden().fixedSize()
+                            }
+                        }
+                        .listRowBackground(Color.cardBackground)
+
+                        HStack {
+                            Text("Rest Timer").foregroundStyle(Color.textPrimary)
+                            Spacer()
+                            HStack(spacing: 4) {
+                                Stepper("", value: $defaultRestSeconds, in: 30...600, step: 15)
+                                    .labelsHidden().fixedSize()
+                                Text(restLabel(defaultRestSeconds))
+                                    .foregroundStyle(Color.accentBlue)
+                                    .font(.system(size: 15, weight: .medium))
+                                    .frame(minWidth: 56, alignment: .trailing)
                             }
                         }
                         .listRowBackground(Color.cardBackground)
 
                         Button(role: .destructive) {
-                            appState.workoutStore.resetToUserWorkouts()
+                            store.resetToUserWorkouts()
                         } label: {
                             Label("Reset to My Workouts (A/B/C)", systemImage: "arrow.counterclockwise")
                                 .font(.system(size: 14))
@@ -218,31 +215,31 @@ struct SettingsView: View {
 
                     // Account
                     Section("Account") {
-                        if appState.authService.isSignedIn && !appState.authService.isGuest {
+                        if auth.isSignedIn && !auth.isGuest {
                             HStack {
                                 Image(systemName: "person.crop.circle.fill")
                                     .font(.system(size: 28))
                                     .foregroundStyle(Color.accentPurple)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(appState.authService.displayName)
+                                    Text(auth.displayName)
                                         .font(.system(size: 15, weight: .semibold))
                                         .foregroundStyle(Color.textPrimary)
-                                    if !appState.authService.email.isEmpty {
-                                        Text(appState.authService.email)
+                                    if !auth.email.isEmpty {
+                                        Text(auth.email)
                                             .font(.system(size: 12))
                                             .foregroundStyle(Color.textSecondary)
                                     }
                                 }
                                 Spacer()
                                 Button("Sign Out") {
-                                    appState.authService.signOut()
+                                    auth.signOut()
                                     appState.isOnboardingComplete = false
                                 }
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(Color.accentRed)
                             }
                         } else {
-                            Text(appState.authService.isGuest ? "Signed in as Guest — data is local only." : "Not signed in.")
+                            Text(auth.isGuest ? "Signed in as Guest — data is local only." : "Not signed in.")
                                 .font(.system(size: 14))
                                 .foregroundStyle(Color.textSecondary)
                         }
@@ -252,36 +249,142 @@ struct SettingsView: View {
                     // About
                     Section("About") {
                         HStack {
-                            Text("Version")
-                                .foregroundStyle(Color.textPrimary)
+                            Text("Version").foregroundStyle(Color.textPrimary)
                             Spacer()
-                            Text("1.0.0")
-                                .foregroundStyle(Color.textSecondary)
+                            Text(appVersion).foregroundStyle(Color.textSecondary)
                         }
                         .listRowBackground(Color.cardBackground)
                     }
                 }
                 .scrollContentBackground(.hidden)
             }
-            .navigationTitle("Settings")
+            .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
                 }
             }
-            .sheet(isPresented: $showWhoopConnect) {
-                WhoopConnectView()
-            }
-            .onAppear {
-                calorieGoal = "\(Int(storedCalorieGoal))"
-                proteinGoal = "\(Int(storedProteinGoal))"
-                stepGoal = "\(Int(storedStepGoal))"
-                workoutReminderEnabled = storedReminderEnabled
-                workoutReminderHour = storedReminderHour
-                workoutReminderMinute = storedReminderMinute
-            }
+            .sheet(isPresented: $showWhoopConnect) { WhoopConnectView() }
+            .onAppear { syncFromStorage() }
         }
+    }
+
+    // MARK: - Profile header
+
+    @ViewBuilder
+    private var profileSection: some View {
+        Section {
+            VStack(spacing: 14) {
+                // Avatar + emoji picker
+                Menu {
+                    ForEach(emojiChoices, id: \.self) { e in
+                        Button { profileEmoji = e } label: { Text("\(e)  Set avatar") }
+                    }
+                } label: {
+                    ZStack(alignment: .bottomTrailing) {
+                        Circle()
+                            .fill(Color.accentBlue.opacity(0.18))
+                            .frame(width: 84, height: 84)
+                            .overlay(Text(profileEmoji).font(.system(size: 40)))
+                        Image(systemName: "pencil.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundStyle(Color.accentBlue)
+                            .background(Circle().fill(Color.cardBackground))
+                    }
+                }
+
+                // Editable name
+                if isEditingName {
+                    HStack {
+                        TextField("Your name", text: $nameDraft)
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(Color.textPrimary)
+                            .multilineTextAlignment(.center)
+                            .submitLabel(.done)
+                            .onSubmit { commitName() }
+                        Button("Save") { commitName() }
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Color.accentBlue)
+                    }
+                } else {
+                    Button {
+                        nameDraft = profileName
+                        isEditingName = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text(profileName)
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundStyle(Color.textPrimary)
+                            Image(systemName: "pencil")
+                                .font(.system(size: 12))
+                                .foregroundStyle(Color.textTertiary)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                if !auth.email.isEmpty {
+                    Text(auth.email)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.textSecondary)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .listRowBackground(Color.clear)
+        }
+    }
+
+    // MARK: - Quick stats
+
+    @ViewBuilder
+    private var statsSection: some View {
+        Section {
+            HStack(spacing: 0) {
+                ProfileStat(value: "\(store.sessions.count)", label: "Workouts", color: .accentBlue)
+                Divider().frame(height: 38).overlay(Color.separatorColor)
+                ProfileStat(value: "\(store.streak.currentDays)", label: "Day Streak", color: .accentOrange)
+                Divider().frame(height: 38).overlay(Color.separatorColor)
+                ProfileStat(value: "\(store.sessionsThisWeek().count)", label: "This Week", color: .accentGreen)
+            }
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.cardBackground)
+        }
+    }
+
+    @ViewBuilder
+    private func goalRow(label: String, text: Binding<String>, placeholder: String, onChange: @escaping (String) -> Void) -> some View {
+        HStack {
+            Text(label).foregroundStyle(Color.textPrimary)
+            Spacer()
+            TextField(placeholder, text: text)
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.trailing)
+                .foregroundStyle(Color.accentBlue)
+                .frame(width: 80)
+                .onChange(of: text.wrappedValue) { _, v in onChange(v) }
+        }
+        .listRowBackground(Color.cardBackground)
+    }
+
+    // MARK: - Helpers
+
+    private var appVersion: String {
+        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+        let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
+        return b.isEmpty ? v : "\(v) (\(b))"
+    }
+
+    private func restLabel(_ seconds: Int) -> String {
+        if seconds < 60 { return "\(seconds)s" }
+        let m = seconds / 60, s = seconds % 60
+        return s == 0 ? "\(m)m" : "\(m)m \(s)s"
+    }
+
+    private func commitName() {
+        auth.updateDisplayName(nameDraft)
+        isEditingName = false
     }
 
     private func timeFromComponents(_ hour: Int, _ minute: Int) -> Date {
@@ -289,7 +392,48 @@ struct SettingsView: View {
         c.hour = hour; c.minute = minute
         return Calendar.current.date(from: c) ?? Date()
     }
+
+    private func syncFromStorage() {
+        calorieGoal = "\(Int(storedCalorieGoal))"
+        proteinGoal = "\(Int(storedProteinGoal))"
+        stepGoal = "\(Int(storedStepGoal))"
+        workoutReminderEnabled = storedReminderEnabled
+        workoutReminderHour = storedReminderHour
+        workoutReminderMinute = storedReminderMinute
+    }
 }
+
+private struct ProfileStat: View {
+    let value: String
+    let label: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(value).font(.metric(22)).foregroundStyle(color)
+            Text(label).font(.metricLabel(11)).foregroundStyle(Color.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+    }
+}
+
+// MARK: - Reusable avatar (Home header + profile)
+
+struct ProfileAvatar: View {
+    var diameter: CGFloat = 34
+    @AppStorage("profileEmoji") private var profileEmoji = "💪"
+
+    var body: some View {
+        Circle()
+            .fill(Color.accentBlue.opacity(0.18))
+            .frame(width: diameter, height: diameter)
+            .overlay(Text(profileEmoji).font(.system(size: diameter * 0.5)))
+            .overlay(Circle().strokeBorder(Color.cardBorder, lineWidth: 0.5))
+    }
+}
+
+// MARK: - Integration row (third-party setup instructions)
 
 struct IntegrationRow: View {
     let icon: String
@@ -331,7 +475,7 @@ struct IntegrationRow: View {
                         Label(name, systemImage: icon)
                             .font(.system(size: 22, weight: .bold))
                             .foregroundStyle(color)
-                        Text("How to connect \(name) to Health+")
+                        Text("How to connect \(name) to HealthSync")
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(Color.textPrimary)
                         Text(instructions ?? "")

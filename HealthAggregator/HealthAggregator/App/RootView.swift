@@ -53,17 +53,11 @@ struct MainTabView: View {
                 }
                 .tag(2)
 
-            RecoveryView()
-                .tabItem {
-                    Label("Recovery", systemImage: "heart.fill")
-                }
-                .tag(3)
-
             HabitsView()
                 .tabItem {
                     Label("Habits", systemImage: "checkmark.circle.fill")
                 }
-                .tag(4)
+                .tag(3)
         }
         .tint(Color.accentBlue)
     }

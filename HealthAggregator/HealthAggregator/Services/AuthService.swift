@@ -69,6 +69,15 @@ final class AuthService: NSObject {
         }
     }
 
+    // MARK: - Profile editing
+
+    func updateDisplayName(_ name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        displayName = trimmed
+        save()
+    }
+
     // MARK: - Persistence
 
     func persistToDefaults() { save() }

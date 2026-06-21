@@ -22,6 +22,7 @@ struct ActiveWorkoutView: View {
     @State private var prTimer: Timer? = nil
     @State private var liveActivity = LiveActivityManager()
     @State private var supersetPickerIdx: Int? = nil
+    @AppStorage("defaultRestSeconds") private var defaultRestSeconds = 180
 
     private var store: WorkoutStore { appState.workoutStore }
 
@@ -228,10 +229,10 @@ struct ActiveWorkoutView: View {
             if partnerDone < thisDone {
                 startRestTimer(seconds: 20, label: "→ \(partner.name)")
             } else {
-                startRestTimer(seconds: 180, label: "Rest")
+                startRestTimer(seconds: defaultRestSeconds, label: "Rest")
             }
         } else {
-            startRestTimer(seconds: 180, label: "Rest")
+            startRestTimer(seconds: defaultRestSeconds, label: "Rest")
         }
     }
 
