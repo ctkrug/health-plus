@@ -40,7 +40,7 @@ struct TemplateEditorView: View {
 
                     Section {
                         ForEach($template.exercises) { $ex in
-                            ExerciseEditorRow(exercise: $ex, allExercises: template.exercises)
+                            ExerciseEditorRow(exercise: $ex, allExercises: $template.exercises)
                                 .listRowBackground(Color.cardBackground)
                         }
                         .onDelete { template.exercises.remove(atOffsets: $0) }
@@ -136,7 +136,8 @@ struct TemplateEditorView: View {
 
 struct ExerciseEditorRow: View {
     @Binding var exercise: TemplateExercise
-    var allExercises: [TemplateExercise] = []
+    @Binding var allExercises: [TemplateExercise]
+    @State private var showPairPicker = false
 
     private var weightLbs: Double {
         guard let kg = exercise.defaultWeightKg else { return 0 }
@@ -156,7 +157,10 @@ struct ExerciseEditorRow: View {
                     .foregroundStyle(Color.textPrimary)
                 if let partner = supersetPartner {
                     Button {
-                        exercise.supersetGroupID = nil
+                        let gid = exercise.supersetGroupID
+                        for i in allExercises.indices where allExercises[i].supersetGroupID == gid {
+                            allExercises[i].supersetGroupID = nil
+                        }
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "arrow.left.arrow.right")
@@ -172,7 +176,18 @@ struct ExerciseEditorRow: View {
                     }
                     .buttonStyle(.plain)
                     .help("Paired with \(partner) — tap to unpair")
+                } else if allExercises.count > 1 {
+                    Button { showPairPicker = true } label: {
+                        Image(systemName: "arrow.left.arrow.right.circle")
+                            .font(.system(size: 17))
+                            .foregroundStyle(Color.textTertiary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Pair as superset")
                 }
+            }
+            .sheet(isPresented: $showPairPicker) {
+                TemplatePairPickerSheet(sourceID: exercise.id, allExercises: $allExercises)
             }
 
             HStack(spacing: 0) {
@@ -416,6 +431,138 @@ private struct ExercisePill: View {
             .background(color.opacity(0.1))
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - Template superset pair picker
+
+struct TemplatePairPickerSheet: View {
+    @Environment(\.dismiss) var dismiss
+    let sourceID: UUID
+    @Binding var allExercises: [TemplateExercise]
+
+    private var sourceName: String {
+        allExercises.first(where: { $0.id == sourceID })?.name ?? ""
+    }
+
+    private struct Option: Identifiable {
+        let id: UUID
+        let name: String
+        let compat: SupersetEngine.SupersetCompatibility
+        let isCurrentPartner: Bool
+    }
+
+    private var options: [Option] {
+        let sourceGID = allExercises.first(where: { $0.id == sourceID })?.supersetGroupID
+        return allExercises
+            .filter { $0.id != sourceID }
+            .map { ex in
+                let compat = SupersetEngine.compatibility(a: sourceName, b: ex.name)
+                let isPartner = sourceGID != nil && ex.supersetGroupID == sourceGID
+                return Option(id: ex.id, name: ex.name, compat: compat, isCurrentPartner: isPartner)
+            }
+            .sorted { $0.compat.score > $1.compat.score }
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.appBackground.ignoresSafeArea()
+                ScrollView {
+                    VStack(spacing: 0) {
+                        VStack(spacing: 6) {
+                            Image(systemName: "arrow.left.arrow.right.circle.fill")
+                                .font(.system(size: 32))
+                                .foregroundStyle(Color.accentGreen)
+                            Text("Pair \(sourceName) with...")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundStyle(Color.textPrimary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding(.vertical, 20)
+
+                        VStack(spacing: 10) {
+                            ForEach(options) { opt in
+                                let qColor: Color = {
+                                    guard let q = opt.compat.quality else { return .accentRed }
+                                    return Color(hex: q.colorHex)
+                                }()
+                                VStack(alignment: .leading, spacing: 8) {
+                                    HStack {
+                                        Text((opt.compat.quality?.label ?? "Conflict").uppercased())
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundStyle(qColor).tracking(0.8)
+                                        Text("· \(opt.compat.label)")
+                                            .font(.system(size: 11))
+                                            .foregroundStyle(Color.textTertiary)
+                                        Spacer()
+                                        if opt.isCurrentPartner {
+                                            Label("Paired", systemImage: "checkmark.circle.fill")
+                                                .font(.system(size: 12, weight: .semibold))
+                                                .foregroundStyle(Color.accentGreen)
+                                        }
+                                    }
+                                    HStack {
+                                        Text(opt.name)
+                                            .font(.system(size: 15, weight: .semibold))
+                                            .foregroundStyle(Color.textPrimary)
+                                        Spacer()
+                                        if !opt.isCurrentPartner {
+                                            Button(opt.compat.quality == nil ? "Pair Anyway" : "Pair Together") {
+                                                applyPair(targetID: opt.id)
+                                            }
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .foregroundStyle(.white)
+                                            .padding(.horizontal, 14).padding(.vertical, 7)
+                                            .background(qColor)
+                                            .clipShape(Capsule())
+                                            .buttonStyle(.plain)
+                                        }
+                                    }
+                                    if let w = opt.compat.warning {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: opt.compat.quality == nil ? "exclamationmark.triangle.fill" : "exclamationmark.circle.fill")
+                                                .font(.system(size: 11))
+                                                .foregroundStyle(opt.compat.quality == nil ? Color.accentRed : Color.accentYellow)
+                                            Text(w).font(.system(size: 12)).foregroundStyle(Color.textSecondary)
+                                        }
+                                    } else if let q = opt.compat.quality {
+                                        Text(q.description).font(.system(size: 12)).foregroundStyle(Color.textSecondary)
+                                    }
+                                }
+                                .padding(14)
+                                .background(Color.cardBackground)
+                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .strokeBorder(opt.isCurrentPartner ? Color.accentGreen.opacity(0.5) : Color.cardBorder,
+                                                      lineWidth: opt.isCurrentPartner ? 1.5 : 0.5)
+                                )
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 30)
+                    }
+                }
+            }
+            .navigationTitle("Pair Superset")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Cancel") { dismiss() }.foregroundStyle(Color.textSecondary)
+                }
+            }
+        }
+    }
+
+    private func applyPair(targetID: UUID) {
+        let newGID = UUID()
+        for i in allExercises.indices {
+            if allExercises[i].id == sourceID || allExercises[i].id == targetID {
+                allExercises[i].supersetGroupID = newGID
+            }
+        }
+        dismiss()
     }
 }
 

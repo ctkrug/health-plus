@@ -99,12 +99,71 @@ enum SupersetEngine {
 
     /// Classify an exercise's primary movement pattern.
     static func classify(_ exercise: TemplateExercise) -> MovementPattern {
-        // Prefer library muscle groups (most reliable)
-        if let def = ExerciseLibrary.find(exercise.name) {
-            return patternFromMuscles(def.muscleGroups, name: exercise.name)
+        classify(name: exercise.name)
+    }
+
+    /// Classify by name — works for both TemplateExercise and WorkoutExercise.
+    static func classify(name: String) -> MovementPattern {
+        if let def = ExerciseLibrary.find(name) {
+            return patternFromMuscles(def.muscleGroups, name: name)
         }
-        // Fallback: keyword match on the exercise name
-        return patternFromName(exercise.name)
+        return patternFromName(name)
+    }
+
+    // MARK: - Compatibility query (used by in-workout picker)
+
+    struct SupersetCompatibility {
+        let quality: PairQuality?   // nil = same pattern (conflicting)
+        let label: String           // e.g. "Horizontal Push ↔ Pull"
+        let warning: String?        // non-nil = shown as a caution
+
+        var score: Int {
+            guard let q = quality else { return -1 }
+            switch q {
+            case .antagonist:   return 3
+            case .partial:      return 2
+            case .nonCompeting: return 1
+            }
+        }
+    }
+
+    /// Compute pairing quality between two exercises by name.
+    static func compatibility(a: String, b: String) -> SupersetCompatibility {
+        let pA = classify(name: a), pB = classify(name: b)
+        if pA == pB {
+            return SupersetCompatibility(
+                quality: nil,
+                label: "Same movement pattern",
+                warning: "Both exercises target the same muscles — less rest for the second exercise."
+            )
+        }
+        let antagonists: [(MovementPattern, MovementPattern, String)] = [
+            (.horizontalPush, .horizontalPull,  "Horizontal Push ↔ Pull"),
+            (.verticalPush,   .verticalPull,    "Vertical Push ↔ Pull"),
+            (.elbowFlexion,   .elbowExtension,  "Biceps ↔ Triceps"),
+            (.kneeDominant,   .hipDominant,     "Quads ↔ Hamstrings"),
+        ]
+        for (x, y, label) in antagonists {
+            if (pA == x && pB == y) || (pA == y && pB == x) {
+                return SupersetCompatibility(quality: .antagonist, label: label, warning: nil)
+            }
+        }
+        let partial: [(MovementPattern, MovementPattern, String)] = [
+            (.shoulderAnt,    .shoulderPost,   "Front ↔ Rear Delts"),
+            (.horizontalPush, .shoulderPost,   "Chest ↔ Rear Delts"),
+        ]
+        for (x, y, label) in partial {
+            if (pA == x && pB == y) || (pA == y && pB == x) {
+                return SupersetCompatibility(quality: .partial, label: label, warning: "Some overlap — efficient but less PAP benefit.")
+            }
+        }
+        let upper: Set<MovementPattern> = [.horizontalPush, .horizontalPull, .verticalPush, .verticalPull,
+                                            .elbowFlexion, .elbowExtension, .shoulderAnt, .shoulderPost]
+        let lower: Set<MovementPattern> = [.kneeDominant, .hipDominant, .calves]
+        if (upper.contains(pA) && lower.contains(pB)) || (lower.contains(pA) && upper.contains(pB)) {
+            return SupersetCompatibility(quality: .nonCompeting, label: "Upper ↔ Lower body", warning: nil)
+        }
+        return SupersetCompatibility(quality: .nonCompeting, label: "Non-competing muscles", warning: nil)
     }
 
     // MARK: Private helpers
