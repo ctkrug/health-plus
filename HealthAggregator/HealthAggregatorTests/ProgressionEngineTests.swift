@@ -86,10 +86,23 @@ final class ProgressionEngineTests: XCTestCase {
         XCTAssertTrue(s.isReadyToProgress)
     }
 
-    func testRepRangeBelowMaxHolds() {
+    func testRepRangeBelowMaxPushesReps() {
+        // avg = 9 reps (below max of 12) — engine should push +2 reps toward the cap
         let rule = Fixture.rule(.repRange, minReps: 8, maxReps: 12, sets: 3)
         let history = [Fixture.session(daysAgo: 2, exercise: "Row", sets: [(60, 10), (60, 9), (60, 8)])]
         let s = ProgressionEngine.suggestion(for: "Row", rule: rule, history: history)
+        guard case .increaseReps(let by) = s.action else { return XCTFail("Expected .increaseReps, got \(s.action)") }
+        XCTAssertEqual(by, 2)
+        XCTAssertEqual(s.suggestedReps, 11)   // avg 9 + 2
+        XCTAssertTrue(s.isReadyToProgress)
+    }
+
+    func testRepRangeAtMaxButNotAllSetsHoldsUntilConsistent() {
+        // avg = 12 (= maxReps) but one set was below — hold until all sets hit max
+        let rule = Fixture.rule(.repRange, minReps: 8, maxReps: 12, sets: 3)
+        let history = [Fixture.session(daysAgo: 2, exercise: "Row", sets: [(60, 10), (60, 12), (60, 14)])]
+        let s = ProgressionEngine.suggestion(for: "Row", rule: rule, history: history)
+        // 10 < 12 so allAboveMax is false; avg = 12 → repGain = 0 → holdSteady
         guard case .holdSteady = s.action else { return XCTFail("Expected .holdSteady, got \(s.action)") }
     }
 

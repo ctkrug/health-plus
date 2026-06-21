@@ -163,22 +163,40 @@ final class ProgressionEngine {
 
         if allAboveMax && lastWeightKg > 0 {
             let newWeight = lastWeightKg + rule.effectiveProgressionKg
+            let newLbs = String(format: "%.0f", newWeight / 0.453592)
             return ProgressionSuggestion(
                 action: .increaseWeight(by: rule.effectiveProgressionKg),
                 suggestedWeightKg: newWeight,
                 suggestedReps: rule.minReps,
-                message: "You're above \(rule.maxReps) reps — add weight, start at \(rule.minReps)",
+                message: "You hit \(rule.maxReps) reps — bump to \(newLbs) lb, start at \(rule.minReps)",
                 isReadyToProgress: true,
                 sessionsSinceLastIncrease: sessionsSinceIncrease,
                 previousWeightKg: lastWeightKg,
                 previousReps: avgReps
             )
         }
+
+        // Step reps up +2 per session toward the max, then weight increases
+        let targetReps = min(avgReps + 2, rule.maxReps)
+        let repGain = targetReps - avgReps
+        if repGain > 0 {
+            return ProgressionSuggestion(
+                action: .increaseReps(by: repGain),
+                suggestedWeightKg: lastWeightKg > 0 ? lastWeightKg : nil,
+                suggestedReps: targetReps,
+                message: "Add \(repGain) rep\(repGain == 1 ? "" : "s") — building to \(rule.maxReps)×\(rule.sets), then weight goes up",
+                isReadyToProgress: true,
+                sessionsSinceLastIncrease: sessionsSinceIncrease,
+                previousWeightKg: lastWeightKg,
+                previousReps: avgReps
+            )
+        }
+        // avgReps already at maxReps but some sets didn't hit it — hold until all sets comply
         return ProgressionSuggestion(
             action: .holdSteady,
             suggestedWeightKg: lastWeightKg > 0 ? lastWeightKg : nil,
-            suggestedReps: avgReps,
-            message: "Work up to \(rule.maxReps) reps on all sets",
+            suggestedReps: rule.maxReps,
+            message: "Hit \(rule.maxReps) reps on every set to advance weight",
             isReadyToProgress: false,
             sessionsSinceLastIncrease: sessionsSinceIncrease,
             previousWeightKg: lastWeightKg,

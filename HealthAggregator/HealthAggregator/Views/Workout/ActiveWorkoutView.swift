@@ -12,6 +12,7 @@ struct ActiveWorkoutView: View {
     @State private var restTimer: Timer? = nil
     @State private var restTimerRunning = false
     @State private var restCountdown: Int = 0
+    @State private var restTimerLabel: String = "Rest"
     @State private var showPRBanner: String? = nil
     @State private var showComplete = false
     @State private var showExercisePicker = false
@@ -43,7 +44,7 @@ struct ActiveWorkoutView: View {
 
                     // Rest timer
                     if restTimerRunning {
-                        RestTimerBar(countdown: restCountdown) {
+                        RestTimerBar(label: restTimerLabel, countdown: restCountdown) {
                             cancelRestTimer()
                         }
                     }
@@ -176,12 +177,27 @@ struct ActiveWorkoutView: View {
 
     private func handleSetLogged(_ set: WorkoutSet, exercise: WorkoutExercise) {
         HapticsManager.setLog()
-        startRestTimer(seconds: 90)
 
         // PR check
         if let e1rm = set.estimated1RM,
            store.isPR(exerciseName: exercise.name, estimated1RM: e1rm) {
             showPR(exercise.name)
+        }
+
+        // Superset-aware rest: after logging A, go straight to B (short transition).
+        // Only start the full rest after both exercises have completed this round.
+        if exercise.isSuperset,
+           let gid = exercise.supersetGroupID,
+           let partner = session.exercises.first(where: { $0.supersetGroupID == gid && $0.id != exercise.id }) {
+            let thisDone = session.exercises.first(where: { $0.id == exercise.id })?.sets.filter(\.isCompleted).count ?? 0
+            let partnerDone = partner.sets.filter(\.isCompleted).count
+            if partnerDone < thisDone {
+                startRestTimer(seconds: 20, label: "→ \(partner.name)")
+            } else {
+                startRestTimer(seconds: 90, label: "Rest")
+            }
+        } else {
+            startRestTimer(seconds: 90, label: "Rest")
         }
     }
 
@@ -196,8 +212,9 @@ struct ActiveWorkoutView: View {
         }
     }
 
-    private func startRestTimer(seconds: Int) {
+    private func startRestTimer(seconds: Int, label: String = "Rest") {
         restCountdown = seconds
+        restTimerLabel = label
         restTimerRunning = true
         restTimer?.invalidate()
         restTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { t in
@@ -319,16 +336,19 @@ struct WorkoutTimerHeader: View {
 // MARK: - Rest Timer Bar
 
 struct RestTimerBar: View {
+    let label: String
     let countdown: Int
     let onCancel: () -> Void
 
+    private var isTransition: Bool { label.hasPrefix("→") }
+
     var body: some View {
         HStack {
-            Image(systemName: "timer")
-                .foregroundStyle(Color.accentYellow)
-            Text("Rest: \(countdown)s")
+            Image(systemName: isTransition ? "arrow.right.circle.fill" : "timer")
+                .foregroundStyle(isTransition ? Color.accentGreen : Color.accentYellow)
+            Text("\(label): \(countdown)s")
                 .font(.workoutUI(15))
-                .foregroundStyle(Color.accentYellow)
+                .foregroundStyle(isTransition ? Color.accentGreen : Color.accentYellow)
             Spacer()
             Button("Skip", action: onCancel)
                 .font(.system(size: 13, weight: .medium))
@@ -336,7 +356,7 @@ struct RestTimerBar: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 8)
-        .background(Color.accentYellow.opacity(0.1))
+        .background(isTransition ? Color.accentGreen.opacity(0.08) : Color.accentYellow.opacity(0.1))
     }
 }
 
