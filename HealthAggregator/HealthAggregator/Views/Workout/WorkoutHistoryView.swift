@@ -211,6 +211,37 @@ struct SessionDetailView: View {
 
     private var store: WorkoutStore { appState.workoutStore }
 
+    private var exportText: String {
+        let dateStr = session.startDate.formatted(.dateTime.weekday(.wide).month(.wide).day().year())
+        let duration = "\(Int(session.duration / 60))m"
+        let volume = "\(Int(session.totalVolumeKg / 0.453592).formatted()) lb"
+        var lines = ["\(session.name)", "\(dateStr)  ·  \(duration)  ·  \(volume) total", ""]
+
+        for exercise in session.exercises {
+            let equipment: String
+            if let eq = exercise.progressionRule?.equipment {
+                equipment = " (\(eq.rawValue))"
+            } else {
+                let n = exercise.name.lowercased()
+                if n.contains("machine") || n.contains("lat pull") || n.contains("leg press") {
+                    equipment = " (Machine)"
+                } else if n.contains("barbell") {
+                    equipment = " (Barbell)"
+                } else {
+                    equipment = " (Dumbbell)"
+                }
+            }
+            lines.append("\(exercise.name)\(equipment)")
+            for set in exercise.completedSets {
+                let weight = set.weightKg.map { String(format: "%.0f lb", $0 / 0.453592) } ?? "—"
+                let reps = set.reps.map { "\($0)" } ?? "—"
+                lines.append("  Set \(set.setNumber): \(weight) × \(reps) reps\(set.isPR ? "  🔥 PR" : "")")
+            }
+            lines.append("")
+        }
+        return lines.joined(separator: "\n").trimmingCharacters(in: .newlines)
+    }
+
     var body: some View {
         ZStack {
             Color.appBackground.ignoresSafeArea()
@@ -247,6 +278,9 @@ struct SessionDetailView: View {
                     }
                     Button { templateName = session.name; showSaveAsTemplate = true } label: {
                         Label("Save as Template", systemImage: "square.and.arrow.down")
+                    }
+                    ShareLink(item: exportText, subject: Text(session.name)) {
+                        Label("Share / Export", systemImage: "square.and.arrow.up")
                     }
                     Divider()
                     Button(role: .destructive) { showDeleteAlert = true } label: {
