@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 /// Combined Profile + Settings hub. Opened from the avatar in the Home (Today) header.
 /// Shows who you are + quick stats up top, then every app setting below
@@ -9,8 +10,12 @@ struct ProfileView: View {
 
     // Profile
     @AppStorage("profileEmoji") private var profileEmoji = "💪"
+    @AppStorage("appLockEnabled") private var appLockEnabled = false
     @State private var nameDraft = ""
     @State private var isEditingName = false
+    @State private var usernameDraft = ""
+    @State private var isEditingUsername = false
+    @State private var photoItem: PhotosPickerItem?
 
     // Goals (mirrored to storage)
     @State private var calorieGoal = "2500"
@@ -219,6 +224,25 @@ struct ProfileView: View {
                         .listRowBackground(Color.cardBackground)
                     }
 
+                    // Security
+                    Section {
+                        Toggle(isOn: $appLockEnabled) {
+                            Label {
+                                Text("Require Face ID / Passcode")
+                                    .foregroundStyle(Color.textPrimary)
+                            } icon: {
+                                Image(systemName: "faceid").foregroundStyle(Color.accentBlue)
+                            }
+                        }
+                        .tint(Color.accentBlue)
+                        .listRowBackground(Color.cardBackground)
+                    } header: {
+                        Text("Security")
+                    } footer: {
+                        Text("Lock the app when it's closed or backgrounded. Uses your device biometrics or passcode.")
+                            .font(.system(size: 11))
+                    }
+
                     // Account
                     Section("Account") {
                         if auth.isSignedIn && !auth.isGuest {
@@ -273,29 +297,54 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $showWhoopConnect) { WhoopConnectView() }
             .onAppear { syncFromStorage() }
+            .onChange(of: photoItem) { _, item in
+                guard let item else { return }
+                Task {
+                    if let data = try? await item.loadTransferable(type: Data.self) {
+                        await MainActor.run { profile.setImage(data: data) }
+                    }
+                }
+            }
         }
     }
 
     // MARK: - Profile header
 
+    private var profile: ProfileStore { appState.profileStore }
+
     @ViewBuilder
     private var profileSection: some View {
         Section {
             VStack(spacing: 14) {
-                // Avatar + emoji picker
+                // Avatar — photo if set, else emoji. Tap to choose a photo or pick an emoji.
                 Menu {
+                    PhotosPicker(selection: $photoItem, matching: .images) {
+                        Label("Choose Photo", systemImage: "photo")
+                    }
+                    if profile.hasPhoto {
+                        Button(role: .destructive) { profile.removePhoto() } label: {
+                            Label("Remove Photo", systemImage: "trash")
+                        }
+                    }
+                    Divider()
                     ForEach(emojiChoices, id: \.self) { e in
-                        Button { profileEmoji = e } label: { Text("\(e)  Set avatar") }
+                        Button { profileEmoji = e; profile.removePhoto() } label: { Text("\(e)  Use emoji") }
                     }
                 } label: {
                     ZStack(alignment: .bottomTrailing) {
-                        Circle()
-                            .fill(Color.cardElevated)
-                            .frame(width: 84, height: 84)
-                            .overlay(Text(profileEmoji).font(.system(size: 40)))
-                            .overlay(Circle().strokeBorder(.brand, lineWidth: 2.5))
-                        Image(systemName: "pencil.circle.fill")
-                            .font(.system(size: 22))
+                        Group {
+                            if let img = profile.image {
+                                Image(uiImage: img).resizable().scaledToFill()
+                            } else {
+                                Circle().fill(Color.cardElevated)
+                                    .overlay(Text(profileEmoji).font(.system(size: 40)))
+                            }
+                        }
+                        .frame(width: 84, height: 84)
+                        .clipShape(Circle())
+                        .overlay(Circle().strokeBorder(.brand, lineWidth: 2.5))
+                        Image(systemName: "camera.circle.fill")
+                            .font(.system(size: 24))
                             .foregroundStyle(Color.brandStart)
                             .background(Circle().fill(Color.cardBackground))
                     }
@@ -331,10 +380,38 @@ struct ProfileView: View {
                     .buttonStyle(.plain)
                 }
 
+                // Editable @username
+                if isEditingUsername {
+                    HStack(spacing: 2) {
+                        Text("@").foregroundStyle(Color.textSecondary)
+                        TextField("username", text: $usernameDraft)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Color.textPrimary)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .submitLabel(.done)
+                            .onSubmit { commitUsername() }
+                            .frame(maxWidth: 160)
+                        Button("Save") { commitUsername() }
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Color.accentBlue)
+                    }
+                } else {
+                    Button {
+                        usernameDraft = profile.username
+                        isEditingUsername = true
+                    } label: {
+                        Text(profile.username.isEmpty ? "Add a username" : "@\(profile.username)")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(profile.username.isEmpty ? Color.accentBlue : Color.textSecondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+
                 if !auth.email.isEmpty {
                     Text(auth.email)
                         .font(.system(size: 13))
-                        .foregroundStyle(Color.textSecondary)
+                        .foregroundStyle(Color.textTertiary)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -394,6 +471,17 @@ struct ProfileView: View {
         isEditingName = false
     }
 
+    private func commitUsername() {
+        // Normalize to a simple handle: lowercase, no spaces or leading @
+        let cleaned = usernameDraft
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "@", with: "")
+            .replacingOccurrences(of: " ", with: "")
+            .lowercased()
+        profile.username = cleaned
+        isEditingUsername = false
+    }
+
     private func timeFromComponents(_ hour: Int, _ minute: Int) -> Date {
         var c = Calendar.current.dateComponents([.year, .month, .day], from: Date())
         c.hour = hour; c.minute = minute
@@ -428,15 +516,22 @@ private struct ProfileStat: View {
 // MARK: - Reusable avatar (Home header + profile)
 
 struct ProfileAvatar: View {
+    @Environment(AppState.self) private var appState
     var diameter: CGFloat = 34
     @AppStorage("profileEmoji") private var profileEmoji = "💪"
 
     var body: some View {
-        Circle()
-            .fill(Color.cardElevated)
-            .frame(width: diameter, height: diameter)
-            .overlay(Text(profileEmoji).font(.system(size: diameter * 0.5)))
-            .overlay(Circle().strokeBorder(.brand, lineWidth: 2))
+        Group {
+            if let img = appState.profileStore.image {
+                Image(uiImage: img).resizable().scaledToFill()
+            } else {
+                Circle().fill(Color.cardElevated)
+                    .overlay(Text(profileEmoji).font(.system(size: diameter * 0.5)))
+            }
+        }
+        .frame(width: diameter, height: diameter)
+        .clipShape(Circle())
+        .overlay(Circle().strokeBorder(.brand, lineWidth: 2))
     }
 }
 

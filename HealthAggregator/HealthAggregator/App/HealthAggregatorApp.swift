@@ -97,6 +97,10 @@ final class AppState {
     var notificationService = NotificationService()
     var habitStore = HabitStore()
     var authService = AuthService()
+    var profileStore = ProfileStore()
+
+    /// App-lock gate. Lives here (not in a view) so it survives the theme-driven RootView rebuild.
+    var isUnlocked = false
 
     // Stored var so @Observable tracks mutations and re-renders RootView
     var isOnboardingComplete: Bool = UserDefaults.standard.bool(forKey: "onboardingComplete") {

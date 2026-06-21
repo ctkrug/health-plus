@@ -28,6 +28,8 @@
     <string>Health+ writes your logged workouts and swim sessions back to Apple Health to keep your records complete.</string>
     <key>NSMotionUsageDescription</key>
     <string>Health+ uses motion data to accurately count your activity during workouts.</string>
+    <key>NSFaceIDUsageDescription</key>
+    <string>HealthSync uses Face ID to lock the app so only you can see your health data.</string>
     <key>UIApplicationSceneManifest</key>
     <dict>
         <key>UIApplicationSupportsMultipleScenes</key>
