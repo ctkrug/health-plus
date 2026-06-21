@@ -6,7 +6,7 @@ import UserNotifications
 @main
 struct HealthAggregatorApp: App {
     @State private var appState = AppState()
-    @AppStorage("appearanceMode") private var appearanceMode = AppAppearance.system.rawValue
+    @AppStorage("appTheme") private var appTheme = AppTheme.midnight.rawValue
 
     init() {
         registerBackgroundTasks()
@@ -16,7 +16,9 @@ struct HealthAggregatorApp: App {
         WindowGroup {
             RootView()
                 .environment(appState)
-                .preferredColorScheme(AppAppearance(rawValue: appearanceMode)?.colorScheme)
+                .preferredColorScheme(AppTheme(rawValue: appTheme)?.scheme)
+                // Re-key on theme change so every semantic color token re-resolves app-wide.
+                .id(appTheme)
                 .onOpenURL { url in
                     handleURL(url)
                 }

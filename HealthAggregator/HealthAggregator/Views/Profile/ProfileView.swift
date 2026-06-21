@@ -29,7 +29,7 @@ struct ProfileView: View {
     @AppStorage("workoutReminderEnabled") private var storedReminderEnabled = false
     @AppStorage("workoutReminderHour") private var storedReminderHour = 7
     @AppStorage("workoutReminderMinute") private var storedReminderMinute = 0
-    @AppStorage("appearanceMode") private var appearanceMode = AppAppearance.system.rawValue
+    @AppStorage("appTheme") private var appTheme = AppTheme.midnight.rawValue
     @AppStorage("defaultSets") private var defaultSets = 3
     @AppStorage("defaultMinReps") private var defaultMinReps = 8
     @AppStorage("defaultMaxReps") private var defaultMaxReps = 12
@@ -52,18 +52,24 @@ struct ProfileView: View {
                     profileSection
                     statsSection
 
-                    // Appearance
-                    Section("Appearance") {
-                        Picker(selection: $appearanceMode) {
-                            ForEach(AppAppearance.allCases) { mode in
-                                Label(mode.label, systemImage: mode.icon).tag(mode.rawValue)
+                    // Theme
+                    Section {
+                        LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 14) {
+                            ForEach(AppTheme.allCases) { theme in
+                                ThemePreviewCard(theme: theme, isSelected: appTheme == theme.rawValue) {
+                                    withAnimation(.easeInOut(duration: 0.25)) { appTheme = theme.rawValue }
+                                    HapticsManager.selection()
+                                }
                             }
-                        } label: {
-                            Text("Theme").foregroundStyle(Color.textPrimary)
                         }
-                        .pickerStyle(.menu)
-                        .tint(Color.accentBlue)
-                        .listRowBackground(Color.cardBackground)
+                        .padding(.vertical, 4)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+                        .listRowBackground(Color.clear)
+                    } header: {
+                        Text("Theme")
+                    } footer: {
+                        Text("Pick a look — applies instantly across the whole app.")
+                            .font(.system(size: 11))
                     }
 
                     // Integrations

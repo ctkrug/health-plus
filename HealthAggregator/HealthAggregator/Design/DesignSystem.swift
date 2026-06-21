@@ -3,28 +3,35 @@ import UIKit
 
 // MARK: - Colors
 //
-// Soothing, accessible palette that adapts to light & dark mode automatically. Every semantic token
-// is an adaptive color (a UIColor dynamic provider) that resolves to a calm, desaturated tone in
-// each appearance. Accents are intentionally muted — no neon — for an easy-on-the-eyes feel.
+// Every semantic token resolves from the active `AppTheme` (see Theme.swift). Tokens are computed
+// `static var`s reading `AppTheme.current.palette`; switching theme rebuilds the view tree
+// (the app root keys its identity on the theme) so all colors re-resolve. Pick from 5 hand-tuned
+// palettes in Profile → Theme. Never hardcode hex in views — add/extend a palette instead.
 extension Color {
+    private static var p: ThemePalette { AppTheme.current.palette }
+
     // Surfaces
-    static let appBackground    = Color(light: "#F4F6FA", dark: "#0F1115")
-    static let cardBackground   = Color(light: "#FFFFFF", dark: "#181B22")
-    static let cardBorder       = Color(light: "#E5E8EE", dark: "#272B33")
-    static let separatorColor   = Color(light: "#E9ECF1", dark: "#20242B")
+    static var appBackground: Color  { p.appBackground }
+    static var cardBackground: Color { p.cardBackground }
+    static var cardElevated: Color   { p.cardElevated }
+    static var cardBorder: Color     { p.cardBorder }
+    static var separatorColor: Color { p.separator }
+
+    // Soft elevation shadow tuned per theme (strong in light, subtle in dark)
+    static var cardShadow: Color     { Color.black.opacity(p.shadowOpacity) }
 
     // Text
-    static let textPrimary      = Color(light: "#1B1E24", dark: "#ECEEF1")
-    static let textSecondary    = Color(light: "#5E6470", dark: "#9AA1AC")
-    static let textTertiary     = Color(light: "#9AA0AB", dark: "#5B616C")
+    static var textPrimary: Color    { p.textPrimary }
+    static var textSecondary: Color  { p.textSecondary }
+    static var textTertiary: Color   { p.textTertiary }
 
-    // Accents (muted — deeper in light mode for contrast, softer in dark)
-    static let accentBlue       = Color(light: "#3C6CB4", dark: "#6E9BD8")
-    static let accentGreen      = Color(light: "#2F8F57", dark: "#6FC58C")
-    static let accentYellow     = Color(light: "#B8893A", dark: "#E6C46E")
-    static let accentRed        = Color(light: "#C2554F", dark: "#E08B86")
-    static let accentPurple     = Color(light: "#7E63B8", dark: "#A98FD8")
-    static let accentOrange     = Color(light: "#C57A38", dark: "#E0A36A")
+    // Accents
+    static var accentBlue: Color     { p.accentBlue }
+    static var accentGreen: Color    { p.accentGreen }
+    static var accentYellow: Color   { p.accentYellow }
+    static var accentRed: Color      { p.accentRed }
+    static var accentPurple: Color   { p.accentPurple }
+    static var accentOrange: Color   { p.accentOrange }
 
     static func recoveryColor(for value: Double) -> Color {
         switch value {
@@ -66,36 +73,6 @@ extension UIColor {
     }
 }
 
-// MARK: - Appearance setting
-enum AppAppearance: String, CaseIterable, Identifiable {
-    case system, light, dark
-    var id: String { rawValue }
-
-    var label: String {
-        switch self {
-        case .system: return "System"
-        case .light:  return "Light"
-        case .dark:   return "Dark"
-        }
-    }
-
-    var icon: String {
-        switch self {
-        case .system: return "circle.lefthalf.filled"
-        case .light:  return "sun.max.fill"
-        case .dark:   return "moon.fill"
-        }
-    }
-
-    var colorScheme: ColorScheme? {
-        switch self {
-        case .system: return nil
-        case .light:  return .light
-        case .dark:   return .dark
-        }
-    }
-}
-
 // MARK: - Typography
 extension Font {
     static func metric(_ size: CGFloat) -> Font {
@@ -116,8 +93,11 @@ struct CardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(padding)
-            .background(Color.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(Color.cardBackground)
+                    .shadow(color: Color.cardShadow, radius: 12, x: 0, y: 5)
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .strokeBorder(Color.cardBorder, lineWidth: 0.5)
@@ -274,7 +254,7 @@ extension View {
             .background(primary ? Color.accentBlue : Color.cardBackground)
             .clipShape(Circle())
             .overlay(Circle().strokeBorder(primary ? Color.clear : Color.cardBorder, lineWidth: 0.5))
-            .shadow(color: .black.opacity(primary ? 0.18 : 0.12), radius: 7, y: 2)
+            .shadow(color: primary ? Color.accentBlue.opacity(0.35) : Color.cardShadow, radius: 8, y: 3)
     }
 }
 
