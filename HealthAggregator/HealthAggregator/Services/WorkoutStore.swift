@@ -10,7 +10,17 @@ final class WorkoutStore {
     private(set) var personalRecords: [String: PersonalRecord] = [:]
     private(set) var programs: [TrainingProgram] = []
 
-    var currentSession: WorkoutSession? = nil
+    var currentSession: WorkoutSession? = nil {
+        didSet {
+            let defaults = UserDefaults(suiteName: "group.com.ctkrug.healthplus")
+            if let session = currentSession,
+               let data = try? JSONEncoder().encode(session) {
+                defaults?.set(data, forKey: "activeSessionDraft")
+            } else {
+                defaults?.removeObject(forKey: "activeSessionDraft")
+            }
+        }
+    }
     var isInWorkout = false
     var activeProgram: TrainingProgram? { programs.first { $0.isActive } }
 
@@ -24,6 +34,12 @@ final class WorkoutStore {
         if templates.isEmpty { seedDefaultTemplates() }
         if programs.isEmpty { seedBuiltInPrograms() }
         if !UserDefaults.standard.bool(forKey: "myWorkoutsV1") { migrateToUserWorkouts() }
+        if let data = UserDefaults(suiteName: "group.com.ctkrug.healthplus")?.data(forKey: "activeSessionDraft"),
+           let restored = try? JSONDecoder().decode(WorkoutSession.self, from: data),
+           restored.endDate == nil {
+            currentSession = restored
+            isInWorkout = true
+        }
     }
 
     // MARK: - Core Data Model (programmatic, no .xcdatamodeld needed)
@@ -131,6 +147,15 @@ final class WorkoutStore {
     func deleteSession(_ session: WorkoutSession) {
         sessions.removeAll { $0.id == session.id }
         deleteSessionFromDisk(session.id)
+    }
+
+    func updateSession(_ session: WorkoutSession) {
+        var updated = session
+        updated.totalVolumeKg = session.exercises.reduce(0) { $0 + $1.totalVolume }
+        if let idx = sessions.firstIndex(where: { $0.id == session.id }) {
+            sessions[idx] = updated
+        }
+        saveSession(updated)
     }
 
     // MARK: - Template management

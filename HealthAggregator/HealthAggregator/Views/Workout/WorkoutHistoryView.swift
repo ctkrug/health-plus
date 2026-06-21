@@ -43,6 +43,13 @@ struct WorkoutHistoryView: View {
                                             .padding(.horizontal, 16)
                                     }
                                     .buttonStyle(.plain)
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                        Button(role: .destructive) {
+                                            store.deleteSession(session)
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -193,7 +200,16 @@ struct PRListCard: View {
 // MARK: - Session Detail
 
 struct SessionDetailView: View {
+    @Environment(AppState.self) var appState
+    @Environment(\.dismiss) var dismiss
     let session: WorkoutSession
+
+    @State private var showDeleteAlert = false
+    @State private var showSaveAsTemplate = false
+    @State private var showEdit = false
+    @State private var templateName = ""
+
+    private var store: WorkoutStore { appState.workoutStore }
 
     var body: some View {
         ZStack {
@@ -223,6 +239,61 @@ struct SessionDetailView: View {
         }
         .navigationTitle(session.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button { showEdit = true } label: {
+                        Label("Edit Workout", systemImage: "pencil")
+                    }
+                    Button { templateName = session.name; showSaveAsTemplate = true } label: {
+                        Label("Save as Template", systemImage: "square.and.arrow.down")
+                    }
+                    Divider()
+                    Button(role: .destructive) { showDeleteAlert = true } label: {
+                        Label("Delete Workout", systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                }
+            }
+        }
+        .alert("Delete Workout?", isPresented: $showDeleteAlert) {
+            Button("Delete", role: .destructive) {
+                store.deleteSession(session)
+                dismiss()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This cannot be undone.")
+        }
+        .alert("Save as Template", isPresented: $showSaveAsTemplate) {
+            TextField("Template name", text: $templateName)
+            Button("Save") { saveAsTemplate() }
+            Button("Cancel", role: .cancel) { templateName = "" }
+        } message: {
+            Text("Creates a new workout template with these exercises.")
+        }
+        .sheet(isPresented: $showEdit) {
+            SessionEditView(session: session)
+        }
+    }
+
+    private func saveAsTemplate() {
+        let exercises: [TemplateExercise] = session.exercises.enumerated().map { i, ex in
+            let bestSet = ex.completedSets.max(by: { ($0.weightKg ?? 0) < ($1.weightKg ?? 0) })
+            return TemplateExercise(
+                name: ex.name,
+                orderIndex: i,
+                defaultSets: max(ex.completedSets.count, 1),
+                defaultReps: bestSet?.reps ?? 8,
+                defaultWeightKg: bestSet?.weightKg,
+                defaultWeightUnit: bestSet?.weightUnit ?? .lbs
+            )
+        }
+        var template = WorkoutTemplate(name: templateName.isEmpty ? session.name : templateName, type: session.type)
+        template.exercises = exercises
+        store.saveTemplate(template)
+        templateName = ""
     }
 }
 
@@ -262,5 +333,117 @@ struct ExerciseDetailCard: View {
             }
         }
         .card()
+    }
+}
+
+// MARK: - Session Edit
+
+struct SessionEditView: View {
+    @Environment(AppState.self) var appState
+    @Environment(\.dismiss) var dismiss
+    @State var session: WorkoutSession
+
+    private var store: WorkoutStore { appState.workoutStore }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.appBackground.ignoresSafeArea()
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach($session.exercises) { $exercise in
+                            EditExerciseCard(exercise: $exercise)
+                                .padding(.horizontal, 16)
+                        }
+                        Spacer().frame(height: 30)
+                    }
+                    .padding(.top, 16)
+                }
+            }
+            .navigationTitle("Edit Workout")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { dismiss() }
+                        .foregroundStyle(Color.textSecondary)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Save") {
+                        store.updateSession(session)
+                        dismiss()
+                    }
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(Color.accentGreen)
+                }
+            }
+        }
+    }
+}
+
+struct EditExerciseCard: View {
+    @Binding var exercise: WorkoutExercise
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(exercise.name)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(Color.textPrimary)
+
+            HStack {
+                Text("Set").frame(width: 36, alignment: .leading)
+                Text("Weight (lb)").frame(maxWidth: .infinity)
+                Text("Reps").frame(width: 60)
+            }
+            .font(.system(size: 11, weight: .medium))
+            .foregroundStyle(Color.textTertiary)
+
+            ForEach($exercise.sets) { $set in
+                if set.isCompleted {
+                    EditSetRow(set: $set)
+                }
+            }
+        }
+        .card()
+    }
+}
+
+struct EditSetRow: View {
+    @Binding var set: WorkoutSet
+    @State private var weightText: String = ""
+    @State private var repsText: String = ""
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Text("Set \(set.setNumber)")
+                .font(.metricLabel(13))
+                .foregroundStyle(Color.textTertiary)
+                .frame(width: 36, alignment: .leading)
+
+            TextField("lb", text: $weightText)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.center)
+                .padding(8)
+                .background(Color.cardBorder.opacity(0.5))
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .frame(maxWidth: .infinity)
+                .onChange(of: weightText) { _, v in
+                    if let lb = Double(v) { set.weightKg = lb * 0.453592 }
+                }
+
+            TextField("reps", text: $repsText)
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.center)
+                .padding(8)
+                .background(Color.cardBorder.opacity(0.5))
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .frame(width: 60)
+                .onChange(of: repsText) { _, v in
+                    if let r = Int(v) { set.reps = r }
+                }
+        }
+        .onAppear {
+            if let w = set.weightKg { weightText = String(format: "%.1f", w / 0.453592) }
+            if let r = set.reps { repsText = "\(r)" }
+        }
     }
 }

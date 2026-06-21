@@ -17,6 +17,8 @@ struct ActiveWorkoutView: View {
     @State private var showComplete = false
     @State private var showExercisePicker = false
     @State private var showDiscardAlert = false
+    @State private var showFinishConfirm = false
+    @State private var restTimerEndDate: Date? = nil
     @State private var prTimer: Timer? = nil
     @State private var liveActivity = LiveActivityManager()
 
@@ -110,7 +112,7 @@ struct ActiveWorkoutView: View {
 
                             // Finish button
                             Button {
-                                finishWorkout()
+                                showFinishConfirm = true
                             } label: {
                                 Text("Finish Workout")
                                     .font(.system(size: 17, weight: .bold))
@@ -164,6 +166,24 @@ struct ActiveWorkoutView: View {
             }) {
                 WorkoutCompleteView(session: session)
             }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                elapsed = Date().timeIntervalSince(session.startDate)
+                if let endDate = restTimerEndDate {
+                    let remaining = Int(endDate.timeIntervalSinceNow)
+                    if remaining <= 0 {
+                        restTimerRunning = false
+                        restTimerEndDate = nil
+                    } else {
+                        restCountdown = remaining
+                    }
+                }
+            }
+            .confirmationDialog("Finish this workout?", isPresented: $showFinishConfirm, titleVisibility: .visible) {
+                Button("Finish Workout") { finishWorkout() }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("\(session.completedSets) sets completed · \(Int(elapsed / 60))m")
+            }
         }
         .onAppear { startTimer() }
         .onDisappear { stopTimer() }
@@ -213,6 +233,7 @@ struct ActiveWorkoutView: View {
     }
 
     private func startRestTimer(seconds: Int, label: String = "Rest") {
+        restTimerEndDate = Date().addingTimeInterval(Double(seconds))
         restCountdown = seconds
         restTimerLabel = label
         restTimerRunning = true
@@ -234,6 +255,7 @@ struct ActiveWorkoutView: View {
     private func cancelRestTimer() {
         restTimer?.invalidate()
         restTimerRunning = false
+        restTimerEndDate = nil
         appState.notificationService.cancelRestTimer()
     }
 
@@ -241,10 +263,12 @@ struct ActiveWorkoutView: View {
         guard timer == nil else { return }  // prevent duplicate timers on re-appear
         // Derive elapsed from session start so re-appearing after backgrounding is accurate
         elapsed = Date().timeIntervalSince(session.startDate)
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+        let workoutTick = Timer(timeInterval: 1, repeats: true) { [self] _ in
             elapsed += 1
             updateLiveActivity()
         }
+        RunLoop.main.add(workoutTick, forMode: .common)
+        timer = workoutTick
         let firstExercise = session.exercises.first?.name ?? session.name
         liveActivity.startActivity(workoutName: session.name, exerciseName: firstExercise)
     }
