@@ -194,10 +194,10 @@ struct ActiveWorkoutView: View {
             if partnerDone < thisDone {
                 startRestTimer(seconds: 20, label: "→ \(partner.name)")
             } else {
-                startRestTimer(seconds: 90, label: "Rest")
+                startRestTimer(seconds: 180, label: "Rest")
             }
         } else {
-            startRestTimer(seconds: 90, label: "Rest")
+            startRestTimer(seconds: 180, label: "Rest")
         }
     }
 
