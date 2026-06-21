@@ -140,7 +140,7 @@ struct TodayWorkoutHeroCard: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 18)
                         .padding(.vertical, 9)
-                        .background(Color.accentBlue)
+                        .background(.brand)
                         .clipShape(Capsule())
                 }
             }
@@ -299,9 +299,10 @@ struct WorkoutPreviewView: View {
                         .font(.system(size: 17, weight: .bold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(Color.accentBlue)
+                        .background(.brand)
                         .foregroundStyle(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .shadow(color: Color.brandStart.opacity(0.35), radius: 10, y: 4)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 8)

@@ -290,12 +290,13 @@ struct ProfileView: View {
                 } label: {
                     ZStack(alignment: .bottomTrailing) {
                         Circle()
-                            .fill(Color.accentBlue.opacity(0.18))
+                            .fill(Color.cardElevated)
                             .frame(width: 84, height: 84)
                             .overlay(Text(profileEmoji).font(.system(size: 40)))
+                            .overlay(Circle().strokeBorder(.brand, lineWidth: 2.5))
                         Image(systemName: "pencil.circle.fill")
                             .font(.system(size: 22))
-                            .foregroundStyle(Color.accentBlue)
+                            .foregroundStyle(Color.brandStart)
                             .background(Circle().fill(Color.cardBackground))
                     }
                 }
@@ -432,10 +433,10 @@ struct ProfileAvatar: View {
 
     var body: some View {
         Circle()
-            .fill(Color.accentBlue.opacity(0.18))
+            .fill(Color.cardElevated)
             .frame(width: diameter, height: diameter)
             .overlay(Text(profileEmoji).font(.system(size: diameter * 0.5)))
-            .overlay(Circle().strokeBorder(Color.cardBorder, lineWidth: 0.5))
+            .overlay(Circle().strokeBorder(.brand, lineWidth: 2))
     }
 }
 

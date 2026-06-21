@@ -20,6 +20,10 @@ extension Color {
     // Soft elevation shadow tuned per theme (strong in light, subtle in dark)
     static var cardShadow: Color     { Color.black.opacity(p.shadowOpacity) }
 
+    // Signature gradient endpoints (build gradients via `Color.brandGradient`)
+    static var brandStart: Color     { p.brandStart }
+    static var brandEnd: Color       { p.brandEnd }
+
     // Text
     static var textPrimary: Color    { p.textPrimary }
     static var textSecondary: Color  { p.textSecondary }
@@ -70,6 +74,23 @@ extension UIColor {
             blue: CGFloat(rgb & 0x0000FF) / 255,
             alpha: 1
         )
+    }
+}
+
+// MARK: - Signature gradients (theme character)
+extension ShapeStyle where Self == LinearGradient {
+    /// The active theme's signature gradient — brand mark, primary buttons, avatar ring.
+    static var brand: LinearGradient {
+        LinearGradient(colors: [Color.brandStart, Color.brandEnd],
+                       startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+}
+
+extension Color {
+    /// Convenience for places that need a `LinearGradient` value (not a ShapeStyle context).
+    static var brandGradient: LinearGradient {
+        LinearGradient(colors: [Color.brandStart, Color.brandEnd],
+                       startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 }
 
@@ -203,10 +224,10 @@ struct AppHeader<Trailing: View>: View {
                 HStack(spacing: 7) {
                     Image(systemName: "waveform.path.ecg")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(Color.accentBlue)
+                        .foregroundStyle(.brand)
                     Text("HealthSync")
-                        .font(.system(size: 19, weight: .bold))
-                        .foregroundStyle(Color.textPrimary)
+                        .font(.system(size: 19, weight: .heavy))
+                        .foregroundStyle(.brand)
                         .tracking(0.3)
                 }
                 Spacer()
@@ -227,9 +248,9 @@ struct AppHeader<Trailing: View>: View {
                 .padding(.bottom, 10)
             }
 
-            Rectangle()
-                .fill(Color.separatorColor)
-                .frame(height: 0.5)
+            LinearGradient(colors: [Color.brandStart.opacity(0.55), Color.brandEnd.opacity(0.55)],
+                           startPoint: .leading, endPoint: .trailing)
+                .frame(height: 1)
         }
         .background(Color.cardBackground.ignoresSafeArea(edges: .top))
     }
@@ -249,12 +270,12 @@ extension View {
     func fabStyle(primary: Bool = true, diameter: CGFloat = 56) -> some View {
         self
             .font(.system(size: primary ? 22 : 18, weight: .semibold))
-            .foregroundStyle(primary ? Color.white : Color.textSecondary)
+            .foregroundStyle(primary ? AnyShapeStyle(Color.white) : AnyShapeStyle(Color.textSecondary))
             .frame(width: diameter, height: diameter)
-            .background(primary ? Color.accentBlue : Color.cardBackground)
+            .background(primary ? AnyShapeStyle(Color.brandGradient) : AnyShapeStyle(Color.cardBackground))
             .clipShape(Circle())
             .overlay(Circle().strokeBorder(primary ? Color.clear : Color.cardBorder, lineWidth: 0.5))
-            .shadow(color: primary ? Color.accentBlue.opacity(0.35) : Color.cardShadow, radius: 8, y: 3)
+            .shadow(color: primary ? Color.brandStart.opacity(0.4) : Color.cardShadow, radius: 8, y: 3)
     }
 }
 
