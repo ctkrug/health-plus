@@ -1,0 +1,33 @@
+name: iOS CI (build + test)
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+concurrency: { group: ios-ci-${{ github.ref }}, cancel-in-progress: true }
+jobs:
+  build-test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project (+ stub secrets so it resolves; no real keys needed for tests)
+        working-directory: HealthAggregator
+        run: |
+          [ -f Secrets.xcconfig ] || cp Secrets.xcconfig.example Secrets.xcconfig
+          xcodegen generate
+      - name: Build & test (no signing)
+        working-directory: HealthAggregator
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project HealthAggregator.xcodeproj \
+            -scheme HealthAggregator \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO | xcbeautify || \
+          xcodebuild test \
+            -project HealthAggregator.xcodeproj \
+            -scheme HealthAggregator \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
