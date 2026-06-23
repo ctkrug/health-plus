@@ -1,8 +1,9 @@
 name: iOS CI (build + test)
+# NOTE: iOS builds need a macOS runner, which requires PAID GitHub Actions minutes (10x cost).
+# Enable Actions spending (Settings → Billing → set a macOS spending limit / add a payment method),
+# then trigger this manually. Until then it's dispatch-only so it doesn't auto-fail every push.
+# (The app's existing scripts/release.sh + test.sh remain the local release pipeline.)
 on:
-  push:
-    branches: [main]
-  pull_request:
   workflow_dispatch:
 concurrency: { group: ios-ci-${{ github.ref }}, cancel-in-progress: true }
 jobs:
