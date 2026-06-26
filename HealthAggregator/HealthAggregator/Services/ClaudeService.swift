@@ -22,9 +22,8 @@ final class ClaudeService {
     private let endpoint = "https://api.anthropic.com/v1/messages"
     /// Conversation model — fast/cheap, many turns.
     private let model = "claude-haiku-4-5-20251001"
-    /// Extraction model — a one-shot pass that synthesizes the whole chat into structured habits.
-    /// Stronger than the chat model on purpose; it only runs once at the end of setup.
-    static let extractionModel = "claude-sonnet-4-6"
+    /// Extraction model — forced tool use with a fixed schema; Haiku handles this well and is ~20x cheaper.
+    static let extractionModel = "claude-haiku-4-5-20251001"
 
     // Key is bundled in Info.plist under "AnthropicAPIKey" — no user setup required.
     private var apiKey: String {
@@ -78,7 +77,7 @@ final class ClaudeService {
 
         let body: [String: Any] = [
             "model": model ?? self.model,
-            "max_tokens": 4096,
+            "max_tokens": 1024,
             "system": system,
             "messages": messages.map { ["role": $0.role, "content": $0.content] },
             "tools": [[
