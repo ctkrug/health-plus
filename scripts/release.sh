@@ -104,9 +104,7 @@ cyan "▸ Committing & pushing to GitHub…"
 git add -A
 git commit -m "$COMMIT_MSG
 
-v$NEXT_VERSION (build $NEXT_BUILD)
-
-Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" || { red "Nothing to commit (or commit failed)"; }
+v$NEXT_VERSION (build $NEXT_BUILD)" || { red "Nothing to commit (or commit failed)"; }
 
 # Ensure we're not on a detached head; push current branch to origin.
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
