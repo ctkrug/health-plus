@@ -212,6 +212,31 @@ final class WorkoutStore {
         saveProgramToDisk(programs[idx])
     }
 
+    /// One-time install of Charlie's 12-Week Build as the active program + the six day-templates.
+    /// Gated by a UserDefaults flag so it runs once (on first launch after the update) without
+    /// clobbering later edits. Triggered from `AppState` (not `init`) so the store's unit tests
+    /// keep seeing the vanilla seeded programs/templates.
+    func installCharlieBuildIfNeeded() {
+        let flag = "charlieBuildV1"
+        guard !UserDefaults.standard.bool(forKey: flag) else { return }
+
+        // Program: add it active, deactivate everything else (drop any prior copy by name first).
+        programs.removeAll { $0.name == ExerciseLibrary.charlieBuild.name }
+        for i in programs.indices { programs[i].isActive = false }
+        var build = ExerciseLibrary.charlieBuild
+        build.isActive = true
+        programs.append(build)
+        programs.forEach { saveProgramToDisk($0) }
+
+        // Templates: make the six day-templates the user's "Your Workouts" list.
+        templates.forEach { deleteTemplateFromDisk($0.id) }
+        let dayTemplates = ExerciseLibrary.charlieBuildTemplates
+        dayTemplates.forEach { saveTemplate($0) }
+        templates = dayTemplates
+
+        UserDefaults.standard.set(true, forKey: flag)
+    }
+
     /// Start session from the active program's next workout, pre-populated with smart weights
     func startProgramWorkout() -> WorkoutSession? {
         guard let prog = activeProgram,

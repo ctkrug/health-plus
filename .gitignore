@@ -20,3 +20,6 @@ HealthAggregator/Secrets.xcconfig
 
 # Serena MCP cache/memories
 .serena/
+
+# Personal plan deliverables (kept local, not app code)
+Charlie-12-Week-Bulk-Plan.pptx

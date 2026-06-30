@@ -142,6 +142,38 @@ final class HabitStore {
         save()
     }
 
+    /// One-time install of the four daily non-negotiables that pair with the 12-Week Build plan.
+    /// Gated by a UserDefaults flag and additive (skips any habit already present by name), so it
+    /// never clobbers existing habits. Triggered from `AppState`, not `init`, so the store's unit
+    /// tests keep starting from an empty state.
+    func installCharlieBuildHabitsIfNeeded() {
+        let flag = "charlieBuildHabitsV1"
+        guard !UserDefaults.standard.bool(forKey: flag) else { return }
+
+        let planned: [Habit] = [
+            Habit(name: "Hit 150g Protein", category: .nutrition, icon: "fork.knife",
+                  colorHex: HabitCategory.nutrition.colorHex, timeSlot: .anytime,
+                  notes: "Bulk fuel — about 1 g per lb of bodyweight."),
+            Habit(name: "Creatine (5g)", category: .supplements, icon: "pills.fill",
+                  colorHex: HabitCategory.supplements.colorHex, timeSlot: .anytime,
+                  notes: "Every day — timing doesn't matter."),
+            Habit(name: "Knee & Back Rehab", category: .fitness, icon: "figure.flexibility",
+                  colorHex: HabitCategory.fitness.colorHex, timeSlot: .anytime,
+                  notes: "McGill Big-3 + knee/hip routine, ~10 min. Pain stays ≤ 3/10."),
+            Habit(name: "Log Every Set", category: .fitness, icon: "square.and.pencil",
+                  colorHex: HabitCategory.fitness.colorHex, timeSlot: .anytime,
+                  notes: "Progression is data, not memory."),
+        ]
+        for h in planned where !habits.contains(where: { $0.name == h.name }) {
+            var hh = h
+            hh.orderIndex = habits.count
+            habits.append(hh)
+        }
+        if !habits.isEmpty { isSetupComplete = true }
+        UserDefaults.standard.set(true, forKey: flag)
+        save()
+    }
+
     // MARK: - Grouped helpers
 
     func habitsForSection(_ slot: HabitTimeSlot) -> [Habit] {

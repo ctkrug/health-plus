@@ -424,17 +424,108 @@ enum ExerciseLibrary {
                                muscleGroups: find(name)?.muscleGroups ?? [])
     }
 
+    /// Charlie's-program exercise builder: repRange (= "hit top of range → add weight"), with an
+    /// RIR / coaching note and optional explicit muscle groups for custom machine names.
+    private static func cpe(_ name: String, eq: Equipment, sets: Int, reps: Int, maxReps: Int,
+                            note: String = "", muscles: [String] = []) -> ProgramExercise {
+        let rule = ProgressionRule(strategy: .repRange, equipment: eq, minReps: reps, maxReps: maxReps, sets: sets)
+        return ProgramExercise(exerciseName: name, equipment: eq, orderIndex: 0, rule: rule, notes: note,
+                               muscleGroups: muscles.isEmpty ? (find(name)?.muscleGroups ?? []) : muscles)
+    }
+
     private static func swimPE(_ name: String, distance: Double, sets: Int, stroke: StrokeType, notes: String = "") -> ProgramExercise {
         let rule = ProgressionRule(strategy: .none, equipment: .bodyweight, minReps: 1, maxReps: 1, sets: sets)
         return ProgramExercise(exerciseName: name, equipment: .bodyweight, orderIndex: 0, rule: rule,
                                notes: notes, isSwim: true, swimDistance: distance, swimStroke: stroke)
     }
 
-    private static func makeProgramWorkout(label: String, name: String, type: WorkoutType, exercises: [ProgramExercise]) -> ProgramWorkout {
+    private static func makeProgramWorkout(label: String, name: String, type: WorkoutType, exercises: [ProgramExercise], notes: String = "") -> ProgramWorkout {
         var w = ProgramWorkout(name: name, label: label, type: type)
         w.exercises = exercises.enumerated().map { i, ex in
             var e = ex; e.orderIndex = i; return e
         }
+        w.notes = notes
         return w
+    }
+
+    // MARK: - Charlie's 12-Week Build (active personal program)
+
+    /// Upper-body hypertrophy bulk (arms priority) with knee & back rehab woven in.
+    /// Machines + dumbbells + Smith only (no cables). Workouts are ordered so the program
+    /// cycles Push A → Pull A → Push B → Pull B → Arms → Pump (alternating push/pull).
+    static var charlieBuild: TrainingProgram {
+        var p = TrainingProgram(
+            name: "12-Week Build",
+            description: "Upper-body hypertrophy bulk (arms priority) with knee & back rehab built in. Machines + dumbbells + Smith only. Floor 4 / ceiling 6 days: run Push A · Pull A · Push B · Pull B, add Arms (5th) and Pump (6th). Double progression, deload weeks 6 & 12.",
+            daysPerWeek: 5, goal: .hypertrophy)
+        p.workouts = [
+            makeProgramWorkout(label: "Push A", name: "Chest Emphasis", type: .push, exercises: [
+                cpe("Smith Machine Bench Press", eq: .smithMachine, sets: 3, reps: 6, maxReps: 10, note: "1–2 RIR · main press", muscles: ["Chest", "Triceps", "Front Delts"]),
+                cpe("Machine Chest Press", eq: .machine, sets: 3, reps: 10, maxReps: 12, note: "1–2 RIR", muscles: ["Chest", "Triceps"]),
+                cpe("Machine Shoulder Press", eq: .machine, sets: 3, reps: 8, maxReps: 12, note: "1–2 RIR", muscles: ["Delts", "Triceps"]),
+                cpe("Tricep Pushdown (Machine)", eq: .machine, sets: 3, reps: 10, maxReps: 15, note: "0–2 RIR · lateral/medial heads", muscles: ["Triceps"]),
+                cpe("Overhead Tricep Extension", eq: .dumbbell, sets: 3, reps: 10, maxReps: 15, note: "0–2 RIR · long head", muscles: ["Long Head Triceps"]),
+                cpe("Lying Leg Raise", eq: .bodyweight, sets: 3, reps: 12, maxReps: 15, note: "core", muscles: ["Abs"]),
+            ], notes: "Warm up + knee/spine activation. Finish with the McGill Big-3 (Knee & Back Rehab habit)."),
+            makeProgramWorkout(label: "Pull A", name: "Back Width + Biceps", type: .pull, exercises: [
+                cpe("Machine Lat Pulldown", eq: .machine, sets: 4, reps: 8, maxReps: 12, note: "1–2 RIR · wide grip · work toward pull-ups", muscles: ["Lats"]),
+                cpe("Chest-Supported Row Machine", eq: .machine, sets: 3, reps: 8, maxReps: 12, note: "1–2 RIR · wide grip · spares the back", muscles: ["Mid Back", "Lats"]),
+                cpe("Reverse Pec Deck", eq: .machine, sets: 3, reps: 12, maxReps: 15, note: "0–2 RIR · rear delts", muscles: ["Rear Delts"]),
+                cpe("Machine Curl", eq: .machine, sets: 3, reps: 10, maxReps: 12, note: "0–2 RIR", muscles: ["Biceps"]),
+                cpe("Preacher Curl (Machine)", eq: .machine, sets: 3, reps: 10, maxReps: 15, note: "0–1 RIR", muscles: ["Biceps"]),
+                cpe("Seated Leg Curl", eq: .machine, sets: 3, reps: 12, maxReps: 15, note: "hamstrings · knee-friendly", muscles: ["Hamstrings"]),
+                cpe("Hip Abduction (Machine)", eq: .machine, sets: 3, reps: 15, maxReps: 20, note: "glute med · knee tracking", muscles: ["Glutes"]),
+                cpe("Calf Raise (Seated)", eq: .machine, sets: 3, reps: 15, maxReps: 20, muscles: ["Calves"]),
+            ], notes: "Last 3 = lower/rehab block for the knee. Finish with the McGill Big-3."),
+            makeProgramWorkout(label: "Push B", name: "Shoulder Emphasis", type: .push, exercises: [
+                cpe("Smith Machine Overhead Press", eq: .smithMachine, sets: 4, reps: 8, maxReps: 12, note: "1–2 RIR", muscles: ["Delts", "Triceps"]),
+                cpe("Smith Machine Incline Press", eq: .smithMachine, sets: 3, reps: 8, maxReps: 12, note: "1–2 RIR · upper chest", muscles: ["Upper Chest", "Triceps"]),
+                cpe("Lateral Raise", eq: .dumbbell, sets: 4, reps: 12, maxReps: 20, note: "0–2 RIR · side delts (width)", muscles: ["Side Delts"]),
+                cpe("Machine Fly / Pec Deck", eq: .machine, sets: 3, reps: 12, maxReps: 15, note: "1–2 RIR", muscles: ["Chest"]),
+                cpe("Close-Grip Smith Press", eq: .smithMachine, sets: 3, reps: 8, maxReps: 12, note: "1–2 RIR · triceps", muscles: ["Triceps", "Chest"]),
+                cpe("Machine Tricep Extension", eq: .machine, sets: 3, reps: 12, maxReps: 15, note: "0–2 RIR · long head", muscles: ["Triceps"]),
+            ], notes: "Warm up + activation. Lateral raises drive shoulder width — push them. Finish with the McGill Big-3."),
+            makeProgramWorkout(label: "Pull B", name: "Back Thickness + Arms", type: .pull, exercises: [
+                cpe("Chest-Supported Row Machine", eq: .machine, sets: 4, reps: 8, maxReps: 12, note: "1–2 RIR · neutral/close grip", muscles: ["Mid Back", "Lats"]),
+                cpe("Machine Lat Pulldown", eq: .machine, sets: 3, reps: 10, maxReps: 12, note: "1–2 RIR · neutral/close", muscles: ["Lats"]),
+                cpe("Reverse Pec Deck", eq: .machine, sets: 3, reps: 15, maxReps: 18, note: "0–2 RIR", muscles: ["Rear Delts"]),
+                cpe("Hammer Curl", eq: .dumbbell, sets: 3, reps: 10, maxReps: 12, note: "0–2 RIR · brachialis (arm width)", muscles: ["Biceps", "Brachialis"]),
+                cpe("Machine Curl", eq: .machine, sets: 3, reps: 12, maxReps: 15, note: "0–1 RIR", muscles: ["Biceps"]),
+                cpe("Leg Extension", eq: .machine, sets: 3, reps: 12, maxReps: 15, note: "pain-free ROM · quads", muscles: ["Quads"]),
+                cpe("Hip Abduction (Machine)", eq: .machine, sets: 3, reps: 15, maxReps: 20, note: "glute med", muscles: ["Glutes"]),
+                cpe("Glute Bridge", eq: .bodyweight, sets: 3, reps: 12, maxReps: 15, note: "glutes · back-friendly", muscles: ["Glutes"]),
+            ], notes: "Last 3 = lower/rehab block (add a wall sit if time). Finish with the McGill Big-3."),
+            makeProgramWorkout(label: "Arms", name: "Arms & Weak Points", type: .upper, exercises: [
+                cpe("Machine Curl", eq: .machine, sets: 3, reps: 10, maxReps: 12, note: "0–2 RIR · superset w/ pushdown", muscles: ["Biceps"]),
+                cpe("Tricep Pushdown (Machine)", eq: .machine, sets: 3, reps: 10, maxReps: 12, note: "0–2 RIR · superset w/ curl", muscles: ["Triceps"]),
+                cpe("Preacher Curl (Machine)", eq: .machine, sets: 3, reps: 12, maxReps: 15, note: "0–1 RIR · superset w/ tri ext", muscles: ["Biceps"]),
+                cpe("Machine Tricep Extension", eq: .machine, sets: 3, reps: 12, maxReps: 15, note: "0–1 RIR · long head · superset w/ preacher", muscles: ["Triceps"]),
+                cpe("Hammer Curl", eq: .dumbbell, sets: 3, reps: 12, maxReps: 15, note: "0–2 RIR · superset w/ close-grip", muscles: ["Biceps", "Brachialis"]),
+                cpe("Close-Grip Smith Press", eq: .smithMachine, sets: 3, reps: 10, maxReps: 12, note: "0–2 RIR · superset w/ hammer", muscles: ["Triceps"]),
+                cpe("Lateral Raise", eq: .dumbbell, sets: 3, reps: 15, maxReps: 20, note: "0–2 RIR · side delts", muscles: ["Side Delts"]),
+                cpe("Lying Leg Raise", eq: .bodyweight, sets: 3, reps: 12, maxReps: 15, note: "core", muscles: ["Abs"]),
+            ], notes: "Optional 5th day. Supersets (paired moves) save time — do them back-to-back. Arms recover cheaply: take them close to failure."),
+            makeProgramWorkout(label: "Pump", name: "Pump + Rehab", type: .fullBody, exercises: [
+                cpe("Machine Chest Press", eq: .machine, sets: 3, reps: 15, maxReps: 20, note: "2–3 RIR · light pump", muscles: ["Chest"]),
+                cpe("Machine Lat Pulldown", eq: .machine, sets: 3, reps: 15, maxReps: 20, note: "2–3 RIR", muscles: ["Lats"]),
+                cpe("Lateral Raise", eq: .dumbbell, sets: 3, reps: 15, maxReps: 20, note: "1–2 RIR", muscles: ["Side Delts"]),
+                cpe("Machine Curl", eq: .machine, sets: 3, reps: 15, maxReps: 20, note: "1–2 RIR", muscles: ["Biceps"]),
+                cpe("Tricep Pushdown (Machine)", eq: .machine, sets: 3, reps: 15, maxReps: 20, note: "1–2 RIR", muscles: ["Triceps"]),
+            ], notes: "Optional 6th day. Finish with the full knee/back rehab circuit — or swap the whole day for an easy 20–30 min swim (best low-impact cardio for you; go light on the erg, it loads the knee & back)."),
+        ]
+        return p
+    }
+
+    /// The six day-templates for the Workout tab's "Your Workouts" list (mirrors charlieBuild).
+    static var charlieBuildTemplates: [WorkoutTemplate] {
+        charlieBuild.workouts.map { pw in
+            var t = WorkoutTemplate(name: "\(pw.label) — \(pw.name)", type: pw.type)
+            t.exercises = pw.exercises.enumerated().map { i, pe in
+                TemplateExercise(name: pe.exerciseName, orderIndex: i,
+                                 defaultSets: pe.rule.sets, defaultReps: pe.rule.minReps,
+                                 maxReps: pe.rule.maxReps, muscleGroups: pe.muscleGroups)
+            }
+            return t
+        }
     }
 }

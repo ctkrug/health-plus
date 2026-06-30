@@ -99,6 +99,14 @@ final class AppState {
     var authService = AuthService()
     var profileStore = ProfileStore()
 
+    init() {
+        // One-time install of Charlie's 12-Week Build program + its daily habits. Each is flag-gated
+        // and idempotent. Done here (the composition root) rather than in the stores' inits so the
+        // WorkoutStore/HabitStore unit tests keep seeing vanilla seeded state.
+        workoutStore.installCharlieBuildIfNeeded()
+        habitStore.installCharlieBuildHabitsIfNeeded()
+    }
+
     /// App-lock gate. Lives here (not in a view) so it survives the theme-driven RootView rebuild.
     var isUnlocked = false
 
