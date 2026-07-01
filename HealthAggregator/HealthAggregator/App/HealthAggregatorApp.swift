@@ -110,6 +110,23 @@ final class AppState {
     /// App-lock gate. Lives here (not in a view) so it survives the theme-driven RootView rebuild.
     var isUnlocked = false
 
+    /// Fires at most one muscle-balance-imbalance local notification per rolling week — piggybacks
+    /// on the same weekly window `MuscleBalanceEngine` already recomputes on, not a separate timer.
+    /// Called from RootView's launch `.task`. See docs/SPEC-lift-charts-and-muscle-map.md §2.8.1.
+    func checkMuscleBalanceAlert() {
+        let lastCheckKey = "muscleImbalanceAlertLastCheck"
+        let now = Date()
+        if let last = UserDefaults.standard.object(forKey: lastCheckKey) as? Date,
+           now.timeIntervalSince(last) < 7 * 86400 {
+            return
+        }
+        UserDefaults.standard.set(now, forKey: lastCheckKey)
+
+        let report = MuscleBalanceEngine.balanceReport(sessions: workoutStore.sessions)
+        guard report.hasEnoughData, let rec = MuscleBalanceEngine.topAlertCandidate(from: report) else { return }
+        notificationService.sendMuscleImbalanceAlert(muscleName: rec.group.displayName, reason: rec.reason)
+    }
+
     // Stored var so @Observable tracks mutations and re-renders RootView
     var isOnboardingComplete: Bool = UserDefaults.standard.bool(forKey: "onboardingComplete") {
         didSet { UserDefaults.standard.set(isOnboardingComplete, forKey: "onboardingComplete") }

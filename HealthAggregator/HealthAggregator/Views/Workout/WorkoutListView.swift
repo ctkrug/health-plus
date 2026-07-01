@@ -7,6 +7,7 @@ struct WorkoutListView: View {
     @State private var showPrograms = false
     @State private var preview: WorkoutPreviewItem? = nil
     @State private var editingTemplate: WorkoutTemplate? = nil
+    @State private var showProgress = false
 
     var store: WorkoutStore { appState.workoutStore }
 
@@ -70,6 +71,7 @@ struct WorkoutListView: View {
                         // SECONDARY — everything else is one tap away, but out of the way
                         HStack(spacing: 10) {
                             SecondaryActionButton(title: "History", icon: "clock.arrow.circlepath") { showHistory = true }
+                            SecondaryActionButton(title: "Progress", icon: "chart.line.uptrend.xyaxis") { showProgress = true }
                             SecondaryActionButton(title: "Programs", icon: "square.stack.3d.up.fill") { showPrograms = true }
                             SecondaryActionButton(title: "New", icon: "plus") { showCustomBuilder = true }
                         }
@@ -85,6 +87,7 @@ struct WorkoutListView: View {
             }
             .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showHistory) { WorkoutHistoryView() }
+            .sheet(isPresented: $showProgress) { progressSheet }
             .sheet(isPresented: $showCustomBuilder) { CustomWorkoutBuilderView() }
             .sheet(isPresented: $showPrograms) { ProgramView() }
             .sheet(item: $preview) { item in WorkoutPreviewView(item: item) }
@@ -97,6 +100,34 @@ struct WorkoutListView: View {
             .font(.system(size: 12, weight: .bold))
             .foregroundStyle(Color.textTertiary)
             .tracking(1.2)
+    }
+
+    @ViewBuilder
+    private var progressSheet: some View {
+        let names = LiftHistory.trainedExerciseNames(in: store.sessions)
+        if let first = names.first {
+            NavigationStack {
+                LiftDetailView(exerciseName: first, allExerciseNames: names, sessions: store.sessions)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Done") { showProgress = false }
+                        }
+                    }
+            }
+        } else {
+            VStack(spacing: 14) {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .font(.system(size: 38))
+                    .foregroundStyle(Color.textTertiary)
+                Text("Log a few sets to see lift progress here.")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.textTertiary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appBackground.ignoresSafeArea())
+        }
     }
 }
 

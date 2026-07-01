@@ -336,9 +336,16 @@ struct ExerciseDetailCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(exercise.name)
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(Color.textPrimary)
+            LiftNavLink(exerciseName: exercise.name) {
+                HStack(spacing: 4) {
+                    Text(exercise.name)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(Color.textPrimary)
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Color.accentBlue)
+                }
+            }
 
             ForEach(exercise.completedSets) { set in
                 HStack {

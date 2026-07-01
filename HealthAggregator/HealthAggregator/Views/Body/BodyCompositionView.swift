@@ -87,6 +87,9 @@ struct BodyCompositionView: View {
                                 .padding(.horizontal, 16)
                         }
 
+                        muscleBalanceCard
+                            .padding(.horizontal, 16)
+
                         // Range picker
                         Picker("Range", selection: $selectedRange) {
                             ForEach(ChartRange.allCases, id: \.self) { range in
@@ -263,6 +266,50 @@ struct BodyCompositionView: View {
             .buttonStyle(.plain)
             .padding(.horizontal, 16)
         }
+    }
+
+    // MARK: - Muscle Balance card
+
+    private var muscleBalanceReport: MuscleBalanceReport {
+        MuscleBalanceEngine.balanceReport(sessions: appState.workoutStore.sessions)
+    }
+
+    private var muscleBalanceCard: some View {
+        NavigationLink {
+            MuscleBalanceMapView()
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "figure.arms.open")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(Color.accentBlue)
+                    .frame(width: 44, height: 44)
+                    .background(Color.accentBlue.opacity(0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Muscle Balance")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color.textPrimary)
+                    if let score = muscleBalanceReport.overallScore {
+                        Text("Balance Index: \(score)")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color.textSecondary)
+                    } else {
+                        Text("Interactive body map & training focus")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.textTertiary)
+            }
+            .padding(14)
+            .background(Color.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color.cardBorder, lineWidth: 0.5))
+        }
+        .buttonStyle(.plain)
     }
 
     private func bodySectionLabel(_ text: String) -> some View {

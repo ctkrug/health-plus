@@ -280,8 +280,89 @@ Refs:
 
 ---
 
+## 11. Muscle balance & symmetry
+
+Implemented in `Services/MuscleBalanceEngine.swift`. Taxonomy is `MuscleMap.Muscle` (third-party
+package, not an app-defined enum — see `Models/MuscleTaxonomy.swift`).
+
+**⚠️ Rigor note:** unlike every other section of this document, the specific numbers below are
+**field-consensus estimates** (Renaissance Periodization's published volume-landmark framework,
+cross-checked against Schoenfeld's dose-response meta-analyses) rather than numbers pulled directly
+from a single peer-reviewed source with a stated CI. They're good enough to gate a UI status
+("under/optimal/over"), but a citation-verification pass against the primary literature (not just
+widely-circulated secondary summaries) should happen before this section is held to the same bar as
+§1–10. Flagged in docs/SPEC-lift-charts-and-muscle-map.md §2.5 as follow-up work.
+
+### Fractional set-volume counting
+
+An exercise trains multiple muscles unevenly. `MuscleBalanceEngine.weeklyVolume` gives the primary
+mover full credit per completed set and every secondary/synergist mover half credit — the standard
+approach in RP-style volume tracking and mirrored by consumer volume trackers (Hevy, Strong).
+Example: Bench Press (primary chest, secondary triceps + front delts) → 1 set = 1.0 toward chest,
+0.5 toward triceps, 0.5 toward front delts.
+
+### Weekly volume landmarks (MEV / MRV, working sets/week, natural lifter)
+
+| Muscle | MEV | MRV |
+|---|---|---|
+| Chest | 8 | 20 |
+| Back (lats + mid-back, `Muscle.upperBack`) | 10 | 25 |
+| Lower Back | 2 | 10 |
+| Traps | 4 | 16 |
+| Shoulders (all delt heads combined) | 6 | 22 |
+| Rotator Cuff | 2 | 10 |
+| Biceps | 6 | 20 |
+| Triceps | 6 | 18 |
+| Quads | 8 | 20 |
+| Hamstrings | 6 | 16 |
+| Glutes | 4 | 16 |
+| Inner Thighs (adductors) | 2 | 10 |
+| Calves | 8 | 20 |
+| Abs | 0* | 20 |
+| Obliques | 0* | 16 |
+
+\* trained substantially as a synergist in compound lifts and carries; no MEV is required to make progress.
+
+MEV (Minimum Effective Volume) / MRV (Maximum Recoverable Volume) framework: Israetel M, Hoffmann J,
+et al. *Renaissance Periodization — Scientific Principles of Hypertrophy Training* (RP methodology,
+widely cited but not itself a single peer-reviewed paper — treat as expert-consensus, not primary
+literature). Cross-checked against: Schoenfeld BJ, Ogborn D, Krieger JW. *Dose-response relationship
+between weekly resistance training volume and increases in muscle mass: A systematic review and
+meta-analysis.* J Sports Sci. 2017;35(11):1073–82.
+
+### Antagonist / agonist ratio checks
+
+Independent of absolute volume — classic strength-and-conditioning / injury-prevention ratios, using
+weekly set-volume as a training-emphasis proxy (not a true force-output ratio):
+
+- **Hamstrings : Quads**, target **0.6–0.8**. Quad-dominant training is a documented knee-strain
+  risk factor; low hamstring:quad ratios are used in ACL-injury-risk screening. Refs: Coombs R,
+  Garbutt G. *Developments in the use of the hamstring/quadriceps ratio for the assessment of muscle
+  balance.* J Sports Sci Med. 2002;1(3):56–62.
+- **Pull : Push**, target **1.0–1.5**. Chronic push-dominant training is linked to rounded-shoulder
+  posture and shoulder-impingement risk. Ref: Kluemper M, Uhl T, Hazelrigg H. *Effect of stretching
+  and strengthening shoulder muscles on forward shoulder posture in competitive swimmers.* J Sport
+  Rehabil. 2006;15(1):58–70 (posture/muscle-balance mechanism).
+- **Posterior Chain (lower back + glutes + hamstrings) : Anterior Core (abs + obliques)**, target
+  **0.8–1.5**. Balanced core training is associated with lower low-back-pain risk. Ref: McGill SM.
+  *Low back disorders: evidence-based prevention and rehabilitation.* 2nd ed. Human Kinetics; 2007
+  (core-balance / spine-stability framework).
+
+These two checks (H:Q, posterior:anterior core) are flagged as **rehab-relevant** in the engine
+(`MuscleBalanceEngine.rehabRelevant`) given the app's current 12-Week Build program targets knee and
+back rehab specifically — recommendations weight these muscles ahead of purely aesthetic imbalances.
+
+### Minimum sample gate
+
+No muscle (or the composite score) is scored below **14 days** of total training history — a fresh
+account or a muscle nobody's trained yet should show "not enough data," not a misleading red flag.
+
+---
+
 ## Maintenance notes
 - All numbers are centralized in `InsightsEngine.swift`. No thresholds should be hardcoded in views.
 - Profile inputs (sex, age, height, VO₂max) come from HealthKit characteristic/quantity types in
   `HealthKitService`. If unavailable, the engine degrades gracefully (sex-neutral / hides that insight).
 - Keep this file and the code in lockstep; cite a source for any new threshold.
+- Muscle-balance volume/ratio numbers (§11) are field-consensus estimates, not single-source citations
+  — see the rigor note at the top of that section before treating them as settled.

@@ -194,6 +194,13 @@ xcrun --sdk iphoneos swiftc -target arm64-apple-ios17.0 -parse-as-library -typec
 SourceKit "cannot find type X in scope" diagnostics during single-file edits are **noise**
 (cross-file symbols don't resolve in isolation). Trust the full type-check above / preflight.
 
+⚠️ **This one-liner always reports `no such module 'MuscleMap'`** now that the app has a real
+SwiftPM dependency (`Views/Body/MuscleBalanceMapView.swift` etc.) — raw `swiftc -typecheck` has no
+package-resolution step, so it can never see an SPM module. That specific error is a known false
+positive from this command, not a real bug. `./scripts/preflight.sh` (which `xcodebuild build`s
+instead, for exactly this reason) and `./scripts/test.sh` are SPM-aware and authoritative — trust
+those, not this one-liner, whenever the diff touches anything that imports `MuscleMap`.
+
 ---
 
 ## Automated regression tests

@@ -110,6 +110,25 @@ final class NotificationService {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["workout_reminder"])
     }
 
+    // MARK: - Muscle balance alert (event-driven, not scheduled — see MuscleBalanceEngine)
+
+    /// Fires when a muscle newly crosses into `.under`, or has stayed `.under` for a rehab-relevant
+    /// pair (§2.8.1 of docs/SPEC-lift-charts-and-muscle-map.md). Rate-limiting to one alert per
+    /// weekly recompute is the caller's job (see `AppState.checkMuscleBalanceAlert`).
+    func sendMuscleImbalanceAlert(muscleName: String, reason: String) {
+        let content = UNMutableNotificationContent()
+        content.title = "\(muscleName) Needs Attention"
+        content.body = reason
+        content.sound = .default
+
+        let request = UNNotificationRequest(
+            identifier: "muscleImbalanceAlert",
+            content: content,
+            trigger: UNTimeIntervalNotificationTrigger(timeInterval: 0.5, repeats: false)
+        )
+        UNUserNotificationCenter.current().add(request)
+    }
+
     // MARK: - PR celebration (local)
 
     func sendPRNotification(exerciseName: String, weight: Double, reps: Int) {

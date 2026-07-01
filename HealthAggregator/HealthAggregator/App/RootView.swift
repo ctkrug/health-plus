@@ -23,6 +23,7 @@ struct RootView: View {
                         guard appState.notificationService.isAuthorized else { return }
                         appState.notificationService.scheduleDailySummary()
                         appState.notificationService.scheduleWeeklyRecap()
+                        appState.checkMuscleBalanceAlert()
                     }
             }
         }
